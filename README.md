@@ -1,77 +1,71 @@
-# MCP server for Obsidian
+# MCP server for IP Fabric
 
-MCP server to interact with Obsidian via the Local REST API community plugin.
+MCP server to interact with IP Fabric via the python SDK.
 
-<a href="https://glama.ai/mcp/servers/3wko1bhuek"><img width="380" height="200" src="https://glama.ai/mcp/servers/3wko1bhuek/badge" alt="server for Obsidian MCP server" /></a>
+<a href="https://ipfabric.io"><img width="380" height="200" src="https://ipfabric.io/wp-content/uploads/2024/06/IP_Fabric_Logo_Color-1.svg" alt="server for IP Fabric MCP server" /></a>
 
 ## Components
 
 ### Tools
 
-The server implements multiple tools to interact with Obsidian:
+The server implements multiple tools to interact with IP Fabric:
 
-- list_files_in_vault: Lists all files and directories in the root directory of your Obsidian vault
-- list_files_in_dir: Lists all files and directories in a specific Obsidian directory
-- get_file_contents: Return the content of a single file in your vault.
-- search: Search for documents matching a specified text query across all files in the vault
-- patch_content: Insert content into an existing note relative to a heading, block reference, or frontmatter field.
-- append_content: Append content to a new or existing file in the vault.
-- delete_file: Delete a file or directory from your vault.
+- list_devices: Lists all devices in the IP Fabric inventory
+- get_device_details: Returns detailed information about a specific device
+- search: Search for devices matching a specified text query across all devices in the inventory
+- TODO: complete the list
 
 ### Example prompts
 
-Its good to first instruct Claude to use Obsidian. Then it will always call the tool.
+Its good to first instruct Claude to use IP Fabric. Then it will always call the tool.
 
 The use prompts like this:
-- Get the contents of the last architecture call note and summarize them
-- Search for all files where Azure CosmosDb is mentioned and quickly explain to me the context in which it is mentioned
-- Summarize the last meeting notes and put them into a new note 'summary meeting.md'. Add an introduction so that I can send it via email.
+
+- Get the details of the last device added to the inventory
+- Search for all devices with the tag "production" and quickly explain to me their role in the network
+- TODO: complete the list
 
 ## Configuration
 
-### Obsidian REST API Key
+### IP Fabric API Key
 
-There are two ways to configure the environment with the Obsidian REST API Key. 
+There are two ways to configure the environment with the IP Fabric API Key.
 
 1. Add to server config (preferred)
 
-```json
-{
-  "mcp-obsidian": {
-    "command": "uvx",
-    "args": [
-      "mcp-obsidian"
-    ],
-    "env": {
-      "OBSIDIAN_API_KEY": "<your_api_key_here>",
-      "OBSIDIAN_HOST": "<your_obsidian_host>",
-      "OBSIDIAN_PORT": "<your_obsidian_port>"
+    ```json
+    {
+      "mcp-ipf": {
+        "command": "uvx",
+        "args": [
+          "mcp-ipf"
+        ],
+        "env": {
+          "IP_TOKEN": "<your_api_key_here>",
+          "IPF_URL": "<your_ip_fabric_host>",
+          "IPF_VERIFY": "True|False"
+        }
+      }
     }
-  }
-}
-```
-Sometimes Claude has issues detecting the location of uv / uvx. You can use `which uvx` to find and paste the full path in above config in such cases.
+    ```
+
+    Sometimes Claude has issues detecting the location of uv / uvx. You can use `which uvx` to find and paste the full path in above config in such cases.
 
 2. Create a `.env` file in the working directory with the following required variables:
 
-```
-OBSIDIAN_API_KEY=your_api_key_here
-OBSIDIAN_HOST=your_obsidian_host
-OBSIDIAN_PORT=your_obsidian_port
-```
-
-Note:
-- You can find the API key in the Obsidian plugin config
-- Default port is 27124 if not specified
-- Default host is 127.0.0.1 if not specified
+    ```bash
+    IPF_TOKEN=your_api_key_here
+    IPF_URL=your_ip_fabric_host
+    IPF_VERIFY=True|False
+    ```
 
 ## Quickstart
 
 ### Install
 
-#### Obsidian REST API
+#### IP Fabric SDK
 
-You need the Obsidian REST API community plugin running: https://github.com/coddingtonbear/obsidian-local-rest-api
+You need the IP Fabric SDK installed: https://github.com/ipfabric/ipfabric-sdk
 
 Install and enable it in the settings and copy the api key.
 
@@ -79,53 +73,53 @@ Install and enable it in the settings and copy the api key.
 
 On MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`
 
-On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
-
 <details>
   <summary>Development/Unpublished Servers Configuration</summary>
   
-```json
-{
-  "mcpServers": {
-    "mcp-obsidian": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "<dir_to>/mcp-obsidian",
-        "run",
-        "mcp-obsidian"
-      ],
-      "env": {
-        "OBSIDIAN_API_KEY": "<your_api_key_here>",
-        "OBSIDIAN_HOST": "<your_obsidian_host>",
-        "OBSIDIAN_PORT": "<your_obsidian_port>"
+  ```json
+  {
+    "mcpServers": {
+      "mcp-ipf": {
+        "command": "uv",
+        "args": [
+          "--directory",
+          "<dir_to>/mcp-ipf",
+          "run",
+          "mcp-ipf"
+        ],
+        "env": {
+          "IPF_TOKEN": "<your_api_key_here>",
+          "IPF_URL": "<your_ip_fabric_host>",
+          "IPF_VERIFY": "True|False"
+        }
       }
     }
   }
-}
-```
+  ```
+
 </details>
 
 <details>
   <summary>Published Servers Configuration</summary>
-  
-```json
-{
-  "mcpServers": {
-    "mcp-obsidian": {
-      "command": "uvx",
-      "args": [
-        "mcp-obsidian"
-      ],
-      "env": {
-        "OBSIDIAN_API_KEY": "<YOUR_OBSIDIAN_API_KEY>",
-        "OBSIDIAN_HOST": "<your_obsidian_host>",
-        "OBSIDIAN_PORT": "<your_obsidian_port>"
+
+  ```json
+  {
+    "mcpServers": {
+      "mcp-ipf": {
+        "command": "uvx",
+        "args": [
+          "mcp-ipf"
+        ],
+        "env": {
+          "IPF_TOKEN": "<YOUR_IPF_TOKEN>",
+          "IPF_URL": "<your_ip_fabric_host>",
+          "IPF_VERIFY": "True|False"
+        }
       }
     }
   }
-}
-```
+  ```
+
 </details>
 
 ## Development
@@ -135,6 +129,7 @@ On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
 To prepare the package for distribution:
 
 1. Sync dependencies and update lockfile:
+
 ```bash
 uv sync
 ```
@@ -147,7 +142,7 @@ experience, we strongly recommend using the [MCP Inspector](https://github.com/m
 You can launch the MCP Inspector via [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) with this command:
 
 ```bash
-npx @modelcontextprotocol/inspector uv --directory /path/to/mcp-obsidian run mcp-obsidian
+npx @modelcontextprotocol/inspector uv --directory /path/to/mcp-ipf run mcp-ipf
 ```
 
 Upon launching, the Inspector will display a URL that you can access in your browser to begin debugging.
@@ -155,5 +150,5 @@ Upon launching, the Inspector will display a URL that you can access in your bro
 You can also watch the server logs with this command:
 
 ```bash
-tail -n 20 -f ~/Library/Logs/Claude/mcp-server-mcp-obsidian.log
+tail -n 20 -f ~/Library/Logs/Claude/mcp-server-mcp-ipf.log
 ```
