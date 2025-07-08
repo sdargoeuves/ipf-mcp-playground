@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from dotenv import load_dotenv
+from ipfabric import IPFClient
 from mcp.server import Server
 from mcp.types import (
     EmbeddedResource,
@@ -16,60 +17,81 @@ load_dotenv(override=True)
 
 from . import tools
 
-# Load environment variables
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mcp-ipf")
 
-api_key = os.getenv("IPF_TOKEN")
-if not api_key:
-    raise ValueError(f"IPF_TOKEN environment variable required. Working directory: {os.getcwd()}")
-
 app = Server("mcp-ipf")
-
 tool_handlers = {}
+
+# Global variable to hold the IPFClient instance
+ipf_client = None
+
+
+def initialize_ipf_client():
+    """Initialize the IPFClient with environment variables."""
+    global ipf_client
+    
+    ipf_token = os.getenv("IPF_TOKEN", None)
+    ipf_url = os.getenv("IPF_URL", None)
+    ipf_verify = os.getenv("IPF_VERIFY", "true").lower() in ("true", "1", "yes")
+    ipf_timeout = int(os.getenv("IPF_TIMEOUT", 60))  # Default to 60 seconds if not set
+
+    if not ipf_token:
+        raise ValueError(f"IPF_TOKEN environment variable required. Working directory: {os.getcwd()}")
+    if not ipf_url:
+        raise ValueError(f"IPF_URL environment variable required. Working directory: {os.getcwd()}")
+
+    # Create IPFClient instance
+    ipf_client = IPFClient(base_url=ipf_url, auth=ipf_token, verify=ipf_verify, timeout=ipf_timeout)
+    logger.info(f"IPFClient initialized for URL: {ipf_url}")
+
+
+def register_tool_handlers():
+    """Register all IP Fabric tool handlers."""
+    if ipf_client is None:
+        raise RuntimeError("IPFClient not initialized. Call initialize_ipf_client() first.")
+    
+    # Create and register IP Fabric tool handlers
+    # Each constructor call creates a new ToolHandler instance with the IPFClient
+    add_tool_handler(tools.GetFilterHelpToolHandler(ipf_client))
+    add_tool_handler(tools.GetSnapshotsToolHandler(ipf_client))
+    add_tool_handler(tools.SetSnapshotToolHandler(ipf_client))
+    add_tool_handler(tools.GetDevicesToolHandler(ipf_client))
+    add_tool_handler(tools.GetInterfacesToolHandler(ipf_client))
+    add_tool_handler(tools.GetRoutingTableToolHandler(ipf_client))
+    # Add other IP Fabric tool handlers as you implement them
+    # add_tool_handler(tools.GetSitesToolHandler(ipf_client))
+    # add_tool_handler(tools.GetVendorsToolHandler(ipf_client))
+    # add_tool_handler(tools.GetPlatformsToolHandler(ipf_client))
+    # add_tool_handler(tools.GetVlansToolHandler(ipf_client))
+    # add_tool_handler(tools.GetNeighborsToolHandler(ipf_client))
+    # add_tool_handler(tools.GetAvailableColumnsToolHandler(ipf_client))
+    # add_tool_handler(tools.GetConnectionInfoToolHandler(ipf_client))
+    
+    logger.info(f"Registered {len(tool_handlers)} tool handlers")
 
 
 def add_tool_handler(tool_class: tools.ToolHandler):
     global tool_handlers
-
     tool_handlers[tool_class.name] = tool_class
 
 
 def get_tool_handler(name: str) -> tools.ToolHandler | None:
     if name not in tool_handlers:
         return None
-
     return tool_handlers[name]
-
-
-add_tool_handler(tools.ListFilesInDirToolHandler())
-add_tool_handler(tools.ListFilesInVaultToolHandler())
-add_tool_handler(tools.GetFileContentsToolHandler())
-add_tool_handler(tools.SearchToolHandler())
-add_tool_handler(tools.PatchContentToolHandler())
-add_tool_handler(tools.AppendContentToolHandler())
-add_tool_handler(tools.PutContentToolHandler())
-add_tool_handler(tools.DeleteFileToolHandler())
-add_tool_handler(tools.ComplexSearchToolHandler())
-add_tool_handler(tools.BatchGetFileContentsToolHandler())
-add_tool_handler(tools.PeriodicNotesToolHandler())
-add_tool_handler(tools.RecentPeriodicNotesToolHandler())
-add_tool_handler(tools.RecentChangesToolHandler())
 
 
 @app.list_tools()
 async def list_tools() -> list[Tool]:
     """List available tools."""
-
     return [th.get_tool_description() for th in tool_handlers.values()]
 
 
 @app.call_tool()
 async def call_tool(name: str, arguments: Any) -> Sequence[TextContent | ImageContent | EmbeddedResource]:
     """Handle tool calls for command line run."""
-
     if not isinstance(arguments, dict):
         raise RuntimeError("arguments must be dictionary")
 
@@ -85,8 +107,17 @@ async def call_tool(name: str, arguments: Any) -> Sequence[TextContent | ImageCo
 
 
 async def main():
-    # Import here to avoid issues with event loops
-    from mcp.server.stdio import stdio_server
+    """Main entry point for the MCP server."""
+    try:
+        # Initialize IPFClient and register tools
+        initialize_ipf_client()
+        register_tool_handlers()
+        
+        # Import here to avoid issues with event loops
+        from mcp.server.stdio import stdio_server
 
-    async with stdio_server() as (read_stream, write_stream):
-        await app.run(read_stream, write_stream, app.create_initialization_options())
+        async with stdio_server() as (read_stream, write_stream):
+            await app.run(read_stream, write_stream, app.create_initialization_options())
+    except Exception as e:
+        logger.error(f"Failed to start server: {e}")
+        raise
