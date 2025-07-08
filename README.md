@@ -10,28 +10,56 @@ MCP server to interact with IP Fabric via the python SDK.
 
 The server implements multiple tools to interact with IP Fabric:
 
-- list_devices: Lists all devices in the IP Fabric inventory
-- get_device_details: Returns detailed information about a specific device
-- search: Search for devices matching a specified text query across all devices in the inventory
-- TODO: complete the list
+- **ipf_get_snapshots**: Lists all available snapshots in IP Fabric
+- **ipf_set_snapshot**: Sets the active snapshot for subsequent queries
+- **ipf_get_devices**: Gets device inventory data with optional filters
+- **ipf_get_interfaces**: Gets interface inventory data with optional filters
+- **ipf_get_routing_table**: Gets routing table data with optional filters
+- **ipf_get_sites**: Gets site inventory data (planned)
+- **ipf_get_vendors**: Gets vendor inventory data (planned)
+- **ipf_get_platforms**: Gets platform inventory data (planned)
+- **ipf_get_vlans**: Gets VLAN data (planned)
+- **ipf_get_neighbors**: Gets neighbor discovery data (planned)
+- **ipf_get_available_columns**: Gets available columns for specific table types (planned)
+- **ipf_get_connection_info**: Gets IP Fabric connection information (planned)
 
 ### Example prompts
 
-Its good to first instruct Claude to use IP Fabric. Then it will always call the tool.
+It's good to first instruct Claude to use IP Fabric. Then it will always call the tools.
 
-The use prompts like this:
+Use prompts like this:
 
-- Get the details of the last device added to the inventory
-- Search for all devices with the tag "production" and quickly explain to me their role in the network
-- TODO: complete the list
+- "Show me all available snapshots in IP Fabric"
+- "Set the snapshot to the latest one and show me all devices"
+- "Get all Cisco devices from the inventory"
+- "Show me all interfaces on router 'core-01'"
+- "Find all routes to 192.168.1.0/24"
+- "Get devices with hostname containing 'switch' and show their platforms"
+- "Show me the routing table for devices in site 'headquarters'"
 
 ## Configuration
 
-### IP Fabric API Key
+### IP Fabric API Configuration
 
-There are two ways to configure the environment with the IP Fabric API Key.
+Configure the environment with the IP Fabric connection details:
 
-1. Add to server config (preferred)
+#### Required Environment Variables
+
+```bash
+IPF_TOKEN=your_api_key_here
+IPF_URL=your_ip_fabric_host
+IPF_VERIFY=True|False  # SSL certificate verification
+```
+
+#### Optional Environment Variables
+
+```bash
+IPF_SNAPSHOT_ID=snapshot_id_here  # Set default snapshot
+```
+
+### Configuration Methods
+
+1. **Add to server config (preferred)**
 
     ```json
     {
@@ -41,9 +69,9 @@ There are two ways to configure the environment with the IP Fabric API Key.
           "mcp-ipf"
         ],
         "env": {
-          "IP_TOKEN": "<your_api_key_here>",
+          "IPF_TOKEN": "<your_api_key_here>",
           "IPF_URL": "<your_ip_fabric_host>",
-          "IPF_VERIFY": "True|False"
+          "IPF_VERIFY": "True"
         }
       }
     }
@@ -51,23 +79,27 @@ There are two ways to configure the environment with the IP Fabric API Key.
 
     Sometimes Claude has issues detecting the location of uv / uvx. You can use `which uvx` to find and paste the full path in above config in such cases.
 
-2. Create a `.env` file in the working directory with the following required variables:
+2. **Create a `.env` file** in the working directory with the required variables:
 
     ```bash
     IPF_TOKEN=your_api_key_here
     IPF_URL=your_ip_fabric_host
-    IPF_VERIFY=True|False
+    IPF_VERIFY=True
+    IPF_SNAPSHOT_ID=optional_default_snapshot_id
     ```
 
 ## Quickstart
 
-### Install
+### Prerequisites
 
-#### IP Fabric SDK
+#### IP Fabric API Access
 
-You need the IP Fabric SDK installed: https://github.com/ipfabric/ipfabric-sdk
+You need IP Fabric API access with a valid API token. Get this from your IP Fabric instance:
 
-Install and enable it in the settings and copy the api key.
+1. Log into your IP Fabric instance
+2. Go to Settings → API tokens
+3. Create a new API token
+4. Copy the token for use in configuration
 
 #### Claude Desktop
 
@@ -90,7 +122,7 @@ On MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`
         "env": {
           "IPF_TOKEN": "<your_api_key_here>",
           "IPF_URL": "<your_ip_fabric_host>",
-          "IPF_VERIFY": "True|False"
+          "IPF_VERIFY": "True"
         }
       }
     }
@@ -111,9 +143,9 @@ On MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`
           "mcp-ipf"
         ],
         "env": {
-          "IPF_TOKEN": "<YOUR_IPF_TOKEN>",
+          "IPF_TOKEN": "<your_api_key_here>",
           "IPF_URL": "<your_ip_fabric_host>",
-          "IPF_VERIFY": "True|False"
+          "IPF_VERIFY": "True"
         }
       }
     }
@@ -124,14 +156,48 @@ On MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`
 
 ## Development
 
+### Project Structure
+
+```tree
+mcp-ipf/
+├── src/
+│   └── mcp_ipf/
+│       ├── __init__.py      # Package entry point
+│       ├── server.py        # MCP server implementation
+│       ├── tools.py         # Tool handlers
+│       └── ipf.py          # IP Fabric integration
+├── pyproject.toml
+└── README.md
+```
+
 ### Building
 
 To prepare the package for distribution:
 
 1. Sync dependencies and update lockfile:
 
+    ```bash
+    uv sync
+    ```
+
+2. Build the package:
+
+    ```bash
+    uv build
+    ```
+
+### Running
+
+Run the server directly during development:
+
 ```bash
-uv sync
+uv run mcp-ipf
+```
+
+Or run the server module directly:
+
+```bash
+uv run python -m mcp_ipf
 ```
 
 ### Debugging
@@ -152,3 +218,20 @@ You can also watch the server logs with this command:
 ```bash
 tail -n 20 -f ~/Library/Logs/Claude/mcp-server-mcp-ipf.log
 ```
+
+### Adding New Tools
+
+To add new IP Fabric tools:
+
+1. Create a new tool handler class in `tools.py`
+2. Add the tool class to the `tool_classes` list in `server.py`
+3. The tool will be automatically registered and available
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Connection errors**: Verify your `IPF_URL` and `IPF_TOKEN` are correct
+2. **SSL certificate issues**: Set `IPF_VERIFY=False` if using self-signed certificates
+3. **Permission errors**: Ensure your API token has sufficient permissions in IP Fabric
+4. **Snapshot issues**: Use `ipf_get_snapshots` to see available snapshots, then `ipf_set_snapshot` to select one

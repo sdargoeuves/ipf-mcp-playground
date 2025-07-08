@@ -121,3 +121,8 @@ async def main():
     except Exception as e:
         logger.error(f"Failed to start server: {e}")
         raise
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
+
