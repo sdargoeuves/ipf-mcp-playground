@@ -59,16 +59,17 @@ def register_tool_handlers():
     add_tool_handler(tools.SetSnapshotToolHandler(ipf_client))
     add_tool_handler(tools.GetDevicesToolHandler(ipf_client))
     add_tool_handler(tools.GetInterfacesToolHandler(ipf_client))
-    # add_tool_handler(tools.GetHostsToolHandler(ipf_client))
+    add_tool_handler(tools.GetHostsToolHandler(ipf_client))
     ## Add other IP Fabric tool handlers as you implement them
     add_tool_handler(tools.GetSitesToolHandler(ipf_client))
     add_tool_handler(tools.GetVendorsToolHandler(ipf_client))
     add_tool_handler(tools.GetVlansToolHandler(ipf_client))
     add_tool_handler(tools.GetRoutingTableToolHandler(ipf_client))
-    # add_tool_handler(tools.GetManagedIPv4ToolHandler(ipf_client))
+    add_tool_handler(tools.GetManagedIPv4ToolHandler(ipf_client))
     add_tool_handler(tools.GetNeighborsToolHandler(ipf_client))
     add_tool_handler(tools.GetAvailableColumnsToolHandler(ipf_client))
     add_tool_handler(tools.GetConnectionInfoToolHandler(ipf_client))
+
 
     logger.info(f"Registered {len(tool_handlers)} tool handlers")
 
