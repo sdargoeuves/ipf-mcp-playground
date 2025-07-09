@@ -14,7 +14,9 @@ The server implements multiple tools to interact with IP Fabric:
 - **ipf_set_snapshot**: Sets the active snapshot for subsequent queries
 - **ipf_get_devices**: Gets device inventory data with optional filters
 - **ipf_get_interfaces**: Gets interface inventory data with optional filters
-- **ipf_get_routing_table**: Gets routing table data with optional filters
+- **ipf_get_routing_table_ipv4**: Gets IPv4 routing table data with optional filters
+- **ipf_get_managed_ipv4**: Gets managed IP data with optional filters
+- **ipf_get_hosts**: Gets host data with optional filters
 - **ipf_get_sites**: Gets site inventory data (planned)
 - **ipf_get_vendors**: Gets vendor inventory data (planned)
 - **ipf_get_platforms**: Gets platform inventory data (planned)

@@ -14,17 +14,17 @@ dependencies = [
 name = "Seb d'Argoeuves"
 email = "sebastien.dargoeuves@ipfabric.io"
 
-# [build-system]
-# requires = [ "hatchling",]
-# build-backend = "hatchling.build"
+[build-system]
+requires = [ "hatchling",]
+build-backend = "hatchling.build"
 
 # [dependency-groups]
 # dev = [
 #     "pyright>=1.1.389",
 # ]
 
-# [project.scripts]
-# mcp-ipf = "mcp_ipf:main"
+[project.scripts]
+mcp-ipf = "mcp_ipf:main"
 
 
 
