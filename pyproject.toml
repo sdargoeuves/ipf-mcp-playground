@@ -5,18 +5,18 @@ description = "MCP server to work with IP Fabric via the python SDK"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-#  "agents>=1.4.0",
-#  "ipfabric>=7.2.1",
-#  "langsmith>=0.4.4",
-#  "mcp>=1.1.0",
-#  "rich>=14.0.0",
-#  "ruff>=0.12.2",
+    #  "agents>=1.4.0",
+    #  "ipfabric>=7.2.1",
+    #  "langsmith>=0.4.4",
+    #  "mcp>=1.1.0",
+    #  "rich>=14.0.0",
+    #  "ruff>=0.12.2",
     "fastapi>=0.115.12",
     "ipfabric>=7.0.3",
     "ipfabric-extensions>=0.5.11",
-    "langsmith>=0.4.4",
+    "langsmith[openai-agents]>=0.4.4",
     "mcp[cli]>=1.7.1",
-    "openai-agents>=0.0.14",
+    "openai-agents[litellm]>=0.0.14",
     "python-dotenv>=1.1.0",
     "streamlit>=1.45.0",
 ]
