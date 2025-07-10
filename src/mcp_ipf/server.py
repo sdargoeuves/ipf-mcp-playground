@@ -15,7 +15,22 @@ from mcp.types import (
 
 load_dotenv(override=True)
 
-from . import tools
+# from . import tools
+
+import sys
+import os
+
+# Get the current directory of the script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Add the parent directory of 'src' to the system path
+sys.path.append(os.path.abspath(os.path.join(current_dir, '..')))
+
+# Now you can import tools
+from mcp_ipf import tools
+
+
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -52,24 +67,43 @@ def register_tool_handlers():
     if ipf_client is None:
         raise RuntimeError("IPFClient not initialized. Call initialize_ipf_client() first.")
     
-    # Create and register IP Fabric tool handlers
-    # Each constructor call creates a new ToolHandler instance with the IPFClient
-    add_tool_handler(tools.GetFilterHelpToolHandler(ipf_client))
-    add_tool_handler(tools.GetSnapshotsToolHandler(ipf_client))
-    add_tool_handler(tools.SetSnapshotToolHandler(ipf_client))
-    add_tool_handler(tools.GetDevicesToolHandler(ipf_client))
-    add_tool_handler(tools.GetInterfacesToolHandler(ipf_client))
-    add_tool_handler(tools.GetHostsToolHandler(ipf_client))
-    ## Add other IP Fabric tool handlers as you implement them
-    add_tool_handler(tools.GetSitesToolHandler(ipf_client))
-    add_tool_handler(tools.GetVendorsToolHandler(ipf_client))
-    add_tool_handler(tools.GetVlansToolHandler(ipf_client))
-    add_tool_handler(tools.GetRoutingTableToolHandler(ipf_client))
-    add_tool_handler(tools.GetManagedIPv4ToolHandler(ipf_client))
-    add_tool_handler(tools.GetNeighborsToolHandler(ipf_client))
-    add_tool_handler(tools.GetAvailableColumnsToolHandler(ipf_client))
-    add_tool_handler(tools.GetConnectionInfoToolHandler(ipf_client))
-
+    # Create and register IP Fabric tool handlers with individual error handling
+    tool_classes = [
+        ("GetFilterHelpToolHandler", tools.GetFilterHelpToolHandler),
+        ("GetSnapshotsToolHandler", tools.GetSnapshotsToolHandler),
+        ("SetSnapshotToolHandler", tools.SetSnapshotToolHandler),
+        ("GetDevicesToolHandler", tools.GetDevicesToolHandler),
+        ("GetInterfacesToolHandler", tools.GetInterfacesToolHandler),
+        ("GetHostsToolHandler", tools.GetHostsToolHandler),
+        ("GetSitesToolHandler", tools.GetSitesToolHandler),
+        ("GetVendorsToolHandler", tools.GetVendorsToolHandler),
+        ("GetVlansToolHandler", tools.GetVlansToolHandler),
+        ("GetRoutingTableToolHandler", tools.GetRoutingTableToolHandler),
+        ("GetManagedIPv4ToolHandler", tools.GetManagedIPv4ToolHandler),
+        ("GetNeighborsToolHandler", tools.GetNeighborsToolHandler),
+        ("GetAvailableColumnsToolHandler", tools.GetAvailableColumnsToolHandler),
+        ("GetConnectionInfoToolHandler", tools.GetConnectionInfoToolHandler),
+    ]
+    
+    for tool_name, tool_class in tool_classes:
+        try:
+            logger.info(f"Registering tool: {tool_name}")
+            tool_handler = tool_class(ipf_client)
+            
+            # Test the tool description to catch schema issues early
+            tool_description = tool_handler.get_tool_description()
+            logger.info(f"Tool {tool_name} description: {tool_description}")
+            
+            add_tool_handler(tool_handler)
+            logger.info(f"Successfully registered: {tool_name}")
+            
+        except Exception as e:
+            logger.error(f"Failed to register {tool_name}: {e}")
+            logger.error(f"Error type: {type(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            # Continue with other tools
+            continue
 
     logger.info(f"Registered {len(tool_handlers)} tool handlers")
 
@@ -85,10 +119,27 @@ def get_tool_handler(name: str) -> tools.ToolHandler | None:
     return tool_handlers[name]
 
 
+# @app.list_tools()
+# async def list_tools() -> list[Tool]:
+#     """List available tools."""
+#     return [th.get_tool_description() for th in tool_handlers.values()]
+
+# Also add this debug version of list_tools
 @app.list_tools()
 async def list_tools() -> list[Tool]:
     """List available tools."""
-    return [th.get_tool_description() for th in tool_handlers.values()]
+    tools_list = []
+    for name, handler in tool_handlers.items():
+        try:
+            tool_desc = handler.get_tool_description()
+            logger.info(f"Adding tool to list: {name}")
+            tools_list.append(tool_desc)
+        except Exception as e:
+            logger.error(f"Error getting tool description for {name}: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    return tools_list
 
 
 @app.call_tool()

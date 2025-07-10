@@ -668,33 +668,31 @@ class GetRoutingTableToolHandler(ToolHandler):
                         "items": {"type": "string"},
                         "description": "Specific columns to return, or to use with the filters. If not specified, all columns will be returned.",
                         "available_columns": {
-                            {
-                                "id": "string",
-                                "hostname": "string",
-                                "network": "string",
-                                "nexthop": [
-                                    {
-                                        "ad": "integer",
-                                        "age": "integer",
-                                        "intName": "string",
-                                        "ip": "string",
-                                        "labels": "string",
-                                        "metric": "integer",
-                                        "oid": "string",
-                                        "vni": "integer",
-                                        "vrfLeak": "string",
-                                        "vtepIp": "string"
-                                    }
-                                ],
-                                "nhCount": "integer",
-                                "nhLowestAge": "integer",
-                                "nhLowestMetric": "integer",
-                                "prefix": "integer",
-                                "protocol": "string",
-                                "siteName": "string",
-                                "sn": "string",
-                                "vrf": "string"
-                            }
+                            "id": "string",
+                            "hostname": "string",
+                            "network": "string",
+                            "nexthop": [
+                                {
+                                    "ad": "integer",
+                                    "age": "integer",
+                                    "intName": "string",
+                                    "ip": "string",
+                                    "labels": "string",
+                                    "metric": "integer",
+                                    "oid": "string",
+                                    "vni": "integer",
+                                    "vrfLeak": "string",
+                                    "vtepIp": "string"
+                                }
+                            ],
+                            "nhCount": "integer",
+                            "nhLowestAge": "integer",
+                            "nhLowestMetric": "integer",
+                            "prefix": "integer",
+                            "protocol": "string",
+                            "siteName": "string",
+                            "sn": "string",
+                            "vrf": "string"
                         }
                     },
                 },
@@ -765,8 +763,8 @@ class GetManagedIPv4ToolHandler(ToolHandler):
                             "type": "string",
                             "vlanId": "integer",
                             "vrf": "string"
-                        }
-                    }
+                        },
+                    },
                 },
                 "required": [],
             },
@@ -898,8 +896,8 @@ class GetNeighborsToolHandler(ToolHandler):
                             "subnet": "string"
                         },
                     },
-                    "required": [],
-                }
+                },
+                "required": [],
             },
         )
 
