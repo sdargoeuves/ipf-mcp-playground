@@ -10,20 +10,20 @@ MCP server to interact with IP Fabric via the python SDK.
 
 The server implements multiple tools to interact with IP Fabric:
 
+- **ipf_get_filter_help**: Provides help information for using filters in queries
 - **ipf_get_snapshots**: Lists all available snapshots in IP Fabric
 - **ipf_set_snapshot**: Sets the active snapshot for subsequent queries
 - **ipf_get_devices**: Gets device inventory data with optional filters
 - **ipf_get_interfaces**: Gets interface inventory data with optional filters
-- **ipf_get_routing_table_ipv4**: Gets IPv4 routing table data with optional filters
-- **ipf_get_managed_ipv4**: Gets managed IP data with optional filters
-- **ipf_get_hosts**: Gets host data with optional filters
-- **ipf_get_sites**: Gets site inventory data (planned)
-- **ipf_get_vendors**: Gets vendor inventory data (planned)
-- **ipf_get_platforms**: Gets platform inventory data (planned)
-- **ipf_get_vlans**: Gets VLAN data (planned)
-- **ipf_get_neighbors**: Gets neighbor discovery data (planned)
-- **ipf_get_available_columns**: Gets available columns for specific table types (planned)
-- **ipf_get_connection_info**: Gets IP Fabric connection information (planned)
+- **ipf_get_hosts**: Gets host inventory data with optional filters
+- **ipf_get_sites**: Gets site inventory data with optional filters
+- **ipf_get_vendors**: Gets vendor inventory data with optional filters
+- **ipf_get_routing_table**: Gets routing table data with optional filters
+- **ipf_get_managed_ipv4**: Gets managed IPv4 data with optional filters
+- **ipf_get_vlans**: Gets VLAN data with optional filters
+- **ipf_get_neighbors**: Gets neighbor discovery data with optional filters
+- **ipf_get_available_columns**: Gets available columns for specific table types
+- **ipf_get_connection_info**: Gets IP Fabric connection information and status
 
 ### Example prompts
 
@@ -38,25 +38,58 @@ Use prompts like this:
 - "Find all routes to 192.168.1.0/24"
 - "Get devices with hostname containing 'switch' and show their platforms"
 - "Show me the routing table for devices in site 'headquarters'"
+- "What columns are available for the devices table?"
 
 ## Configuration
 
-### IP Fabric API Configuration
+### Environment Variables
 
-Configure the environment with the IP Fabric connection details:
+The server uses environment variables for configuration. Copy the `.env.sample` file to `.env` and update the values accordingly:
+
+```bash
+cp .env.sample .env
+```
 
 #### Required Environment Variables
 
+##### IP Fabric Configuration
+
 ```bash
-IPF_TOKEN=your_api_key_here
-IPF_URL=your_ip_fabric_host
-IPF_VERIFY=True|False  # SSL certificate verification
+# IP Fabric Configuration
+IPF_URL=https://ipfabric-server.domain
+IPF_TOKEN=your_api_token_here
+```
+
+##### AI Model Configuration
+
+Choose one of the following AI providers and set the `AI_MODEL` and `AI_API_KEY` variables accordingly.
+
+Here are some examples:
+
+```bash
+# OpenAI (default)
+AI_MODEL="gpt-4o"
+AI_API_KEY=sk-proj-xxx
+
+# Anthropic
+AI_MODEL="anthropic/claude-sonnet-4-0"
+AI_API_KEY=sk-ant-api...
+
+# Google Gemini
+AI_MODEL="gemini/gemini-2.5-flash"
+AI_API_KEY=xxx
 ```
 
 #### Optional Environment Variables
 
+##### LangSmith Tracing (Optional)
+
 ```bash
-IPF_SNAPSHOT_ID=snapshot_id_here  # Set default snapshot
+# Enable tracing with LangSmith
+LANGSMITH_TRACING=true
+LANGSMITH_ENDPOINT="https://eu.api.smith.langchain.com"
+LANGCHAIN_API_KEY=lsv2_xx_123..._123...
+LANGSMITH_PROJECT="ipf-mcp-2025-07"
 ```
 
 ### Configuration Methods
@@ -66,14 +99,20 @@ IPF_SNAPSHOT_ID=snapshot_id_here  # Set default snapshot
     ```json
     {
       "mcp-ipf": {
-        "command": "uvx",
+        "command": "/path/to/uv",
         "args": [
-          "mcp-ipf"
+          "--directory",
+          "<path_to_this_repo>",
+          "run",
+          "--env-file",
+          ".env",
+          "src/mcp_ipf/server.py"
         ],
         "env": {
-          "IPF_TOKEN": "<your_api_key_here>",
+          "IPF_TOKEN": "<your_api_token_here>",
           "IPF_URL": "<your_ip_fabric_host>",
-          "IPF_VERIFY": "True"
+          "AI_MODEL": "<your_ai_model>",
+          "AI_API_KEY": "<your_ai_api_key>"
         }
       }
     }
@@ -81,13 +120,11 @@ IPF_SNAPSHOT_ID=snapshot_id_here  # Set default snapshot
 
     Sometimes Claude has issues detecting the location of uv / uvx. You can use `which uvx` to find and paste the full path in above config in such cases.
 
-2. **Create a `.env` file** in the working directory with the required variables:
+2. **Use `.env` file** in the working directory with the required variables (copy from `.env.sample`):
 
     ```bash
-    IPF_TOKEN=your_api_key_here
-    IPF_URL=your_ip_fabric_host
-    IPF_VERIFY=True
-    IPF_SNAPSHOT_ID=optional_default_snapshot_id
+    cp .env.sample .env
+    # Edit .env with your actual values
     ```
 
 ## Quickstart
@@ -107,86 +144,84 @@ You need IP Fabric API access with a valid API token. Get this from your IP Fabr
 
 On MacOS: `~/Library/Application\ Support/Claude/claude_desktop_config.json`
 
+!!! note
+    it's recommended to use the full path to `uv` in the configuration, as sometimes Claude has issues detecting the location of `uv`.
+    Use `which uv` to find the full path and paste it in the `command` field of the configuration.
+
 <details>
   <summary>Development/Unpublished Servers Configuration</summary>
-  
+
   ```json
-  {
-    "mcpServers": {
-      "mcp-ipf": {
-        "command": "uv",
-        "args": [
-          "--directory",
-          "<dir_to>/mcp-ipf",
-          "run",
-          "mcp-ipf"
-        ],
-        "env": {
-          "IPF_TOKEN": "<your_api_key_here>",
-          "IPF_URL": "<your_ip_fabric_host>",
-          "IPF_VERIFY": "True"
+    {
+      "mcpServers": {
+        "mcp-ipf": {
+          "command": "/path/to/uv",
+          "args": [
+            "--directory",
+            "<path_to_this_repo>",
+            "run",
+            "--env-file",
+            ".env",
+            "src/mcp_ipf/server.py"
+          ],
+          "env": {
+            "IPF_TOKEN": "<your_api_token_here>",
+            "IPF_URL": "<your_ip_fabric_host>"
+          }
         }
       }
     }
-  }
   ```
 
 </details>
 
-<details>
-  <summary>Published Servers Configuration</summary>
+#### Raycast AI - MCP Servers
 
-  ```json
-  {
-    "mcpServers": {
-      "mcp-ipf": {
-        "command": "uvx",
-        "args": [
-          "mcp-ipf"
-        ],
-        "env": {
-          "IPF_TOKEN": "<your_api_key_here>",
-          "IPF_URL": "<your_ip_fabric_host>",
-          "IPF_VERIFY": "True"
-        }
-      }
-    }
-  }
-  ```
+1. Open Raycast, type `mcp` and select `Install Server`
 
-</details>
+    ![Screenshot of Raycast search after typing `mcp`](raycast-mcp-search.png)
+
+2. Fill the form with the following details:
+
+    - command: `/path/to/uv`
+
+      If unsure, use `which uv` to find the full path.
+
+    - arguments: `--directory <path_to_this_repo> run --env-file .env src/mcp_ipf/server.py`
+
+    ![Screenshot of Raycast MCP server installation process](raycast-mcp-install.png)
+
+3. Now you can install the server with `⌘` + `⏎`
+
+### Using the CLI
+
+To use the CLI application, after setting up your environment variables:
+
+```bash
+uv run python cli_app.py
+```
+
+### Using Streamlit
+
+...**coming soon**...
 
 ## Development
 
 ### Project Structure
 
 ```tree
-mcp-ipf/
+playground-mcp-ipf/
 ├── src/
 │   └── mcp_ipf/
 │       ├── __init__.py      # Package entry point
 │       ├── server.py        # MCP server implementation
 │       ├── tools.py         # Tool handlers
-│       └── ipf.py          # IP Fabric integration
+├── .env                      # Environment variables (copy from .env.sample)
+├── .env.sample              # Sample environment variables
+├── cli_app.py               # CLI application using the MCP server
 ├── pyproject.toml
 └── README.md
 ```
-
-### Building
-
-To prepare the package for distribution:
-
-1. Sync dependencies and update lockfile:
-
-    ```bash
-    uv sync
-    ```
-
-2. Build the package:
-
-    ```bash
-    uv build
-    ```
 
 ### Running
 
@@ -194,31 +229,6 @@ Run the server directly during development:
 
 ```bash
 uv run mcp-ipf
-```
-
-Or run the server module directly:
-
-```bash
-uv run python -m mcp_ipf
-```
-
-### Debugging
-
-Since MCP servers run over stdio, debugging can be challenging. For the best debugging
-experience, we strongly recommend using the [MCP Inspector](https://github.com/modelcontextprotocol/inspector).
-
-You can launch the MCP Inspector via [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) with this command:
-
-```bash
-npx @modelcontextprotocol/inspector uv --directory /path/to/mcp-ipf run mcp-ipf
-```
-
-Upon launching, the Inspector will display a URL that you can access in your browser to begin debugging.
-
-You can also watch the server logs with this command:
-
-```bash
-tail -n 20 -f ~/Library/Logs/Claude/mcp-server-mcp-ipf.log
 ```
 
 ### Adding New Tools
@@ -229,11 +239,33 @@ To add new IP Fabric tools:
 2. Add the tool class to the `tool_classes` list in `server.py`
 3. The tool will be automatically registered and available
 
+## Supported AI Models
+
+The server supports multiple AI providers through LiteLLM:
+
+- **OpenAI**: `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`, etc.
+- **Anthropic**: `anthropic/claude-sonnet-4-0`, `anthropic/claude-haiku-3-5`, etc.
+- **Google Gemini**: `gemini/gemini-2.5-flash`, `gemini/gemini-pro`, etc.
+
+See the respective provider documentation for full model lists:
+
+- [OpenAI models](https://docs.litellm.ai/docs/providers/openai#openai-chat-completion-models)
+- [Anthropic models](https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases)
+- [Google Gemini models](https://ai.google.dev/gemini-api/docs/models)
+
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Connection errors**: Verify your `IPF_URL` and `IPF_TOKEN` are correct
-2. **SSL certificate issues**: Set `IPF_VERIFY=False` if using self-signed certificates
+2. **SSL certificate issues**: Check your IP Fabric server's SSL configuration
 3. **Permission errors**: Ensure your API token has sufficient permissions in IP Fabric
 4. **Snapshot issues**: Use `ipf_get_snapshots` to see available snapshots, then `ipf_set_snapshot` to select one
+5. **Environment variable issues**: Ensure your `.env` file is properly configured and accessible
+
+### Getting Help
+
+- Check the server logs: `tail -f ~/Library/Logs/Claude/mcp-server-mcp-ipf.log`
+- Use the MCP Inspector for debugging
+- Verify your IP Fabric API token has the necessary permissions
+- Ensure your IP Fabric instance is accessible from your machine

@@ -13,17 +13,18 @@ from mcp.types import (
 # Note: The main server script will be responsible for creating the IPFClient
 # and passing it to the ToolHandler constructors.
 
+
 class ToolHandler:
     """Base class for all IP Fabric tool handlers.
-    
+
     This class provides the foundation for implementing IP Fabric API tool handlers
     in an MCP (Model Context Protocol) server environment. Each handler wraps specific
     IP Fabric functionality and provides consistent error handling and response formatting.
-    
+
     Attributes:
         name (str): The unique name identifier for this tool handler
         ipf (IPFClient): The IP Fabric client instance used for API communication
-        
+
     Methods:
         get_tool_description(): Returns the MCP Tool definition for this handler
         run_tool(): Executes the tool with provided arguments
@@ -61,11 +62,7 @@ class ToolHandler:
 
     def _handle_exception(self, e: Exception, operation: str) -> List[TextContent]:
         """Helper method to handle exceptions consistently."""
-        return self._format_response(
-            data=str(e),
-            success=False,
-            message=f"Failed to {operation}"
-        )
+        return self._format_response(data=str(e), success=False, message=f"Failed to {operation}")
 
 
 class GetFilterHelpToolHandler(ToolHandler):
@@ -76,11 +73,7 @@ class GetFilterHelpToolHandler(ToolHandler):
         return Tool(
             name=self.name,
             description="Get comprehensive help on IP Fabric filter syntax and operators. Essential for constructing filters for all query functions.",
-            inputSchema={
-                "type": "object",
-                "properties": {},
-                "required": []
-            },
+            inputSchema={"type": "object", "properties": {}, "required": []},
         )
 
     def run_tool(self, args: dict) -> Sequence[TextContent]:
@@ -159,11 +152,7 @@ class GetSnapshotsToolHandler(ToolHandler):
                 List of snapshots with metadata including ID, name, creation time, status,
                 number of devices (total and licensed), siteName, and more.
             """,
-            inputSchema={
-                "type": "object",
-                "properties": {},
-                "required": []
-            },
+            inputSchema={"type": "object", "properties": {}, "required": []},
         )
 
     def run_tool(self, args: dict) -> Sequence[TextContent]:
@@ -208,7 +197,7 @@ class SetSnapshotToolHandler(ToolHandler):
                 "properties": {
                     "snapshot_id": {
                         "type": "string",
-                        "description": "The unique ID of the snapshot to activate. Use ipf_get_snapshots() to see available snapshot IDs."
+                        "description": "The unique ID of the snapshot to activate. Use ipf_get_snapshots() to see available snapshot IDs.",
                     }
                 },
                 "required": ["snapshot_id"],
@@ -219,11 +208,9 @@ class SetSnapshotToolHandler(ToolHandler):
         snapshot_id = args.get("snapshot_id")
         if not snapshot_id:
             return self._format_response(
-                "snapshot_id argument is required",
-                success=False,
-                message="Missing required parameter"
+                "snapshot_id argument is required", success=False, message="Missing required parameter"
             )
-        
+
         try:
             old_snapshot = self.ipf.snapshot_id
             self.ipf.snapshot_id = snapshot_id
@@ -232,8 +219,7 @@ class SetSnapshotToolHandler(ToolHandler):
                 "new_snapshot": self.ipf.snapshot_id,
             }
             return self._format_response(
-                result,
-                message=f"Successfully changed snapshot from {old_snapshot} to {self.ipf.snapshot_id}"
+                result, message=f"Successfully changed snapshot from {old_snapshot} to {self.ipf.snapshot_id}"
             )
         except Exception as e:
             return self._handle_exception(e, f"set snapshot to {snapshot_id}")
@@ -265,7 +251,7 @@ class GetDevicesToolHandler(ToolHandler):
                 "properties": {
                     "filters": {
                         "type": "object",
-                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns."
+                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns.",
                     },
                     "columns": {
                         "type": "array",
@@ -310,8 +296,8 @@ class GetDevicesToolHandler(ToolHandler):
                             "tsDiscoveryStart": "integer",
                             "tsDiscoveryEnd": "integer",
                             "secDiscoveryDuration": "integer",
-                            "credentialsNotes": "string"
-                        }
+                            "credentialsNotes": "string",
+                        },
                     },
                 },
                 "required": [],
@@ -322,13 +308,10 @@ class GetDevicesToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
-            
+
             result = self.ipf.inventory.devices.all(filters=filters, columns=columns)
-            
-            return self._format_response(
-                result,
-                message=f"Retrieved {len(result) if result else 0} devices"
-            )
+
+            return self._format_response(result, message=f"Retrieved {len(result) if result else 0} devices")
         except Exception as e:
             return self._handle_exception(e, "retrieve devices")
 
@@ -358,7 +341,7 @@ class GetInterfacesToolHandler(ToolHandler):
                 "properties": {
                     "filters": {
                         "type": "object",
-                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns."
+                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns.",
                     },
                     "columns": {
                         "type": "array",
@@ -400,8 +383,8 @@ class GetInterfacesToolHandler(ToolHandler):
                             "lastInputType": "string",
                             "lastInputValue": "integer",
                             "lastOutputType": "string",
-                            "lastOutputValue": "integer"
-                        }
+                            "lastOutputValue": "integer",
+                        },
                     },
                 },
                 "required": [],
@@ -412,15 +395,13 @@ class GetInterfacesToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
-            
+
             result = self.ipf.inventory.interfaces.all(filters=filters, columns=columns)
-            
-            return self._format_response(
-                result,
-                message=f"Retrieved {len(result) if result else 0} interfaces"
-            )
+
+            return self._format_response(result, message=f"Retrieved {len(result) if result else 0} interfaces")
         except Exception as e:
             return self._handle_exception(e, "retrieve interfaces")
+
 
 class GetHostsToolHandler(ToolHandler):
     def __init__(self, ipf_client: IPFClient):
@@ -442,13 +423,12 @@ class GetHostsToolHandler(ToolHandler):
                 Host data with IP/MAC addresses, connected switches/interfaces, 
                 gateways, VLAN/VRF info, and access point details
             """,
-
             inputSchema={
                 "type": "object",
                 "properties": {
                     "filters": {
                         "type": "object",
-                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns."
+                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns.",
                     },
                     "columns": {
                         "type": "array",
@@ -456,13 +436,7 @@ class GetHostsToolHandler(ToolHandler):
                         "description": "Specific columns to return, or to use with the filters. If not specified, all columns will be returned.",
                         "available_columns": {
                             "id": "string",
-                            "accessPoints": [
-                                {
-                                    "hostname": "string",
-                                    "sn": "string",
-                                    "ssid": "string"
-                                }
-                            ],
+                            "accessPoints": [{"hostname": "string", "sn": "string", "ssid": "string"}],
                             "dnsName": "string",
                             "edges": [
                                 {
@@ -470,16 +444,10 @@ class GetHostsToolHandler(ToolHandler):
                                     "sn": "string",
                                     "intName": "string",
                                     "intDscr": "string",
-                                    "poe": "string"
+                                    "poe": "string",
                                 }
                             ],
-                            "gateways": [
-                                {
-                                    "hostname": "string",
-                                    "sn": "string",
-                                    "intName": "string"
-                                }
-                            ],
+                            "gateways": [{"hostname": "string", "sn": "string", "intName": "string"}],
                             "ip": "string",
                             "mac": "string",
                             "siteName": "string",
@@ -487,8 +455,8 @@ class GetHostsToolHandler(ToolHandler):
                             "uniqId": "string",
                             "vendor": "string",
                             "vlan": "integer",
-                            "vrf": "string"
-                        }
+                            "vrf": "string",
+                        },
                     },
                 },
                 "required": [],
@@ -499,13 +467,10 @@ class GetHostsToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
-            
+
             result = self.ipf.inventory.hosts.all(filters=filters, columns=columns)
-            
-            return self._format_response(
-                result,
-                message=f"Retrieved {len(result) if result else 0} hosts"
-            )
+
+            return self._format_response(result, message=f"Retrieved {len(result) if result else 0} hosts")
         except Exception as e:
             return self._handle_exception(e, "retrieve hosts")
 
@@ -536,7 +501,7 @@ class GetSitesToolHandler(ToolHandler):
                 "properties": {
                     "filters": {
                         "type": "object",
-                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns."
+                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns.",
                     },
                     "columns": {
                         "type": "array",
@@ -554,8 +519,8 @@ class GetSitesToolHandler(ToolHandler):
                             "stpDomains": ["string"],
                             "switchesCount": "integer",
                             "usersCount": "integer",
-                            "vlanCount": "integer"
-                        }
+                            "vlanCount": "integer",
+                        },
                     },
                 },
                 "required": [],
@@ -566,13 +531,10 @@ class GetSitesToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
-            
+
             result = self.ipf.inventory.sites.all(filters=filters, columns=columns)
-            
-            return self._format_response(
-                result,
-                message=f"Retrieved {len(result) if result else 0} sites"
-            )
+
+            return self._format_response(result, message=f"Retrieved {len(result) if result else 0} sites")
         except Exception as e:
             return self._handle_exception(e, "retrieve sites")
 
@@ -601,7 +563,7 @@ class GetVendorsToolHandler(ToolHandler):
                 "properties": {
                     "filters": {
                         "type": "object",
-                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns."
+                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns.",
                     },
                     "columns": {
                         "type": "array",
@@ -613,8 +575,8 @@ class GetVendorsToolHandler(ToolHandler):
                             "familiesCount": "integer",
                             "modelsCount": "integer",
                             "platformsCount": "integer",
-                            "vendor": "string"
-                        }
+                            "vendor": "string",
+                        },
                     },
                 },
                 "required": [],
@@ -625,13 +587,10 @@ class GetVendorsToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
-            
+
             result = self.ipf.inventory.vendors.all(filters=filters, columns=columns)
-            
-            return self._format_response(
-                result,
-                message=f"Retrieved {len(result) if result else 0} vendors"
-            )
+
+            return self._format_response(result, message=f"Retrieved {len(result) if result else 0} vendors")
         except Exception as e:
             return self._handle_exception(e, "retrieve vendors")
 
@@ -661,7 +620,7 @@ class GetRoutingTableToolHandler(ToolHandler):
                 "properties": {
                     "filters": {
                         "type": "object",
-                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns."
+                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns.",
                     },
                     "columns": {
                         "type": "array",
@@ -682,7 +641,7 @@ class GetRoutingTableToolHandler(ToolHandler):
                                     "oid": "string",
                                     "vni": "integer",
                                     "vrfLeak": "string",
-                                    "vtepIp": "string"
+                                    "vtepIp": "string",
                                 }
                             ],
                             "nhCount": "integer",
@@ -692,8 +651,8 @@ class GetRoutingTableToolHandler(ToolHandler):
                             "protocol": "string",
                             "siteName": "string",
                             "sn": "string",
-                            "vrf": "string"
-                        }
+                            "vrf": "string",
+                        },
                     },
                 },
                 "required": [],
@@ -704,15 +663,13 @@ class GetRoutingTableToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
-            
+
             result = self.ipf.technology.routing.routes_ipv4.all(filters=filters, columns=columns)
-            
-            return self._format_response(
-                result,
-                message=f"Retrieved {len(result) if result else 0} routing entries"
-            )
+
+            return self._format_response(result, message=f"Retrieved {len(result) if result else 0} routing entries")
         except Exception as e:
             return self._handle_exception(e, "retrieve routing table")
+
 
 class GetManagedIPv4ToolHandler(ToolHandler):
     def __init__(self, ipf_client: IPFClient):
@@ -740,7 +697,7 @@ class GetManagedIPv4ToolHandler(ToolHandler):
                 "properties": {
                     "filters": {
                         "type": "object",
-                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns."
+                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns.",
                     },
                     "columns": {
                         "type": "array",
@@ -762,7 +719,7 @@ class GetManagedIPv4ToolHandler(ToolHandler):
                             "stateL2": "string",
                             "type": "string",
                             "vlanId": "integer",
-                            "vrf": "string"
+                            "vrf": "string",
                         },
                     },
                 },
@@ -774,13 +731,10 @@ class GetManagedIPv4ToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
-            
+
             result = self.ipf.technology.addressing.managed_ip_ipv4.all(filters=filters, columns=columns)
-            
-            return self._format_response(
-                result,
-                message=f"Retrieved {len(result) if result else 0} managed IPv4 entries"
-            )
+
+            return self._format_response(result, message=f"Retrieved {len(result) if result else 0} managed IPv4 entries")
         except Exception as e:
             return self._handle_exception(e, "retrieve managed IPv4 entries")
 
@@ -810,7 +764,7 @@ class GetVlansToolHandler(ToolHandler):
                 "properties": {
                     "filters": {
                         "type": "object",
-                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns."
+                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns.",
                     },
                     "columns": {
                         "type": "array",
@@ -825,7 +779,7 @@ class GetVlansToolHandler(ToolHandler):
                             "stdStatus": "string",
                             "stpDomain": "string",
                             "vlanId": "integer",
-                            "vlanName": "string"
+                            "vlanName": "string",
                         },
                     },
                 },
@@ -837,13 +791,10 @@ class GetVlansToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
-            
+
             result = self.ipf.technology.vlans.device_detail.all(filters=filters, columns=columns)
-            
-            return self._format_response(
-                result,
-                message=f"Retrieved {len(result) if result else 0} VLAN entries"
-            )
+
+            return self._format_response(result, message=f"Retrieved {len(result) if result else 0} VLAN entries")
         except Exception as e:
             return self._handle_exception(e, "retrieve VLANs")
 
@@ -874,7 +825,7 @@ class GetNeighborsToolHandler(ToolHandler):
                 "properties": {
                     "filters": {
                         "type": "object",
-                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns."
+                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns.",
                     },
                     "columns": {
                         "type": "array",
@@ -893,7 +844,7 @@ class GetNeighborsToolHandler(ToolHandler):
                             "siteName": "string",
                             "sn": "string",
                             "source": "string",
-                            "subnet": "string"
+                            "subnet": "string",
                         },
                     },
                 },
@@ -905,13 +856,10 @@ class GetNeighborsToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
-            
+
             result = self.ipf.technology.neighbors.neighbors_all.all(filters=filters, columns=columns)
-            
-            return self._format_response(
-                result,
-                message=f"Retrieved {len(result) if result else 0} neighbor entries"
-            )
+
+            return self._format_response(result, message=f"Retrieved {len(result) if result else 0} neighbor entries")
         except Exception as e:
             return self._handle_exception(e, "retrieve neighbors")
 
@@ -941,7 +889,7 @@ class GetAvailableColumnsToolHandler(ToolHandler):
                     "table_type": {
                         "type": "string",
                         "description": "The table type to inspect. Valid options: devices, interfaces, sites, vendors, platforms, routing, vlans, neighbors",
-                        "enum": ["devices", "interfaces", "sites", "vendors", "platforms", "routing", "vlans", "neighbors"]
+                        "enum": ["devices", "interfaces", "sites", "vendors", "platforms", "routing", "vlans", "neighbors"],
                     }
                 },
                 "required": ["table_type"],
@@ -950,12 +898,10 @@ class GetAvailableColumnsToolHandler(ToolHandler):
 
     def run_tool(self, args: dict) -> Sequence[TextContent]:
         table_type = args.get("table_type")
-        
+
         if not table_type:
             return self._format_response(
-                "table_type argument is required",
-                success=False,
-                message="Missing required parameter"
+                "table_type argument is required", success=False, message="Missing required parameter"
             )
 
         # Map table types to their API paths
@@ -975,22 +921,21 @@ class GetAvailableColumnsToolHandler(ToolHandler):
             return self._format_response(
                 f"Unknown table type: {table_type}",
                 success=False,
-                message=f"Available table types: {', '.join(table_map.keys())}"
+                message=f"Available table types: {', '.join(table_map.keys())}",
             )
 
         try:
             columns = self.ipf.get_columns(table_map[table_type])
-            
+
             result = {
                 "table_type": table_type,
                 "table_path": table_map[table_type],
                 "columns": columns,
                 "column_count": len(columns) if columns else 0,
             }
-            
+
             return self._format_response(
-                result,
-                message=f"Retrieved {len(columns) if columns else 0} columns for {table_type} table"
+                result, message=f"Retrieved {len(columns) if columns else 0} columns for {table_type} table"
             )
         except Exception as e:
             return self._handle_exception(e, f"get columns for {table_type}")
@@ -1023,26 +968,24 @@ class GetConnectionInfoToolHandler(ToolHandler):
         try:
             # Get basic connection info
             result = {
-                "base_url": getattr(self.ipf, 'base_url', 'Unknown'),
+                "base_url": getattr(self.ipf, "base_url", "Unknown"),
                 "current_snapshot": self.ipf.snapshot_id,
-                "api_version": getattr(self.ipf, 'api_version', 'Unknown'),
+                "api_version": getattr(self.ipf, "api_version", "Unknown"),
                 "connected": True,  # If we can create this response, we're connected
             }
-            
+
             # Try to get additional info if available
             try:
                 snapshots = self.ipf.get_snapshots()
-                if snapshots:
-                    result["total_snapshots"] = len(snapshots)
-                    result["latest_snapshot"] = snapshots[0] if snapshots else None
+                loaded_snapshots = [snapshots[k] for k, v in snapshots.items() if (v.status == "done" and "$" not in k)]
+                if loaded_snapshots:
+                    result["total_loaded_snapshots"] = len(loaded_snapshots)
+                    result["latest_snapshot"] = snapshots["$last"].snapshot_id
             except Exception:
                 # Don't fail if we can't get snapshots
                 pass
-            
-            return self._format_response(
-                result,
-                message="Connection information retrieved successfully"
-            )
+
+            return self._format_response(result, message="Connection information retrieved successfully")
         except Exception as e:
             return self._handle_exception(e, "get connection information")
 

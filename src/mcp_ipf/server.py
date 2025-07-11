@@ -24,12 +24,10 @@ import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Add the parent directory of 'src' to the system path
-sys.path.append(os.path.abspath(os.path.join(current_dir, '..')))
+sys.path.append(os.path.abspath(os.path.join(current_dir, "..")))
 
 # Now you can import tools
 from mcp_ipf import tools
-
-
 
 
 # Configure logging
@@ -46,7 +44,7 @@ ipf_client = None
 def initialize_ipf_client():
     """Initialize the IPFClient with environment variables."""
     global ipf_client
-    
+
     ipf_token = os.getenv("IPF_TOKEN", None)
     ipf_url = os.getenv("IPF_URL", None)
     ipf_verify = os.getenv("IPF_VERIFY", "true").lower() in ("true", "1", "yes")
@@ -66,7 +64,7 @@ def register_tool_handlers():
     """Register all IP Fabric tool handlers."""
     if ipf_client is None:
         raise RuntimeError("IPFClient not initialized. Call initialize_ipf_client() first.")
-    
+
     # Create and register IP Fabric tool handlers with individual error handling
     tool_classes = [
         ("GetFilterHelpToolHandler", tools.GetFilterHelpToolHandler),
@@ -84,23 +82,24 @@ def register_tool_handlers():
         ("GetAvailableColumnsToolHandler", tools.GetAvailableColumnsToolHandler),
         ("GetConnectionInfoToolHandler", tools.GetConnectionInfoToolHandler),
     ]
-    
+
     for tool_name, tool_class in tool_classes:
         try:
             logger.info(f"Registering tool: {tool_name}")
             tool_handler = tool_class(ipf_client)
-            
+
             # Test the tool description to catch schema issues early
             tool_description = tool_handler.get_tool_description()
             logger.info(f"Tool {tool_name} description: {tool_description}")
-            
+
             add_tool_handler(tool_handler)
             logger.info(f"Successfully registered: {tool_name}")
-            
+
         except Exception as e:
             logger.error(f"Failed to register {tool_name}: {e}")
             logger.error(f"Error type: {type(e)}")
             import traceback
+
             logger.error(f"Traceback: {traceback.format_exc()}")
             # Continue with other tools
             continue
@@ -124,6 +123,7 @@ def get_tool_handler(name: str) -> tools.ToolHandler | None:
 #     """List available tools."""
 #     return [th.get_tool_description() for th in tool_handlers.values()]
 
+
 # Also add this debug version of list_tools
 @app.list_tools()
 async def list_tools() -> list[Tool]:
@@ -137,8 +137,9 @@ async def list_tools() -> list[Tool]:
         except Exception as e:
             logger.error(f"Error getting tool description for {name}: {e}")
             import traceback
+
             logger.error(f"Traceback: {traceback.format_exc()}")
-    
+
     return tools_list
 
 
@@ -165,7 +166,7 @@ async def main():
         # Initialize IPFClient and register tools
         initialize_ipf_client()
         register_tool_handlers()
-        
+
         # Import here to avoid issues with event loops
         from mcp.server.stdio import stdio_server
 
@@ -175,7 +176,8 @@ async def main():
         logger.error(f"Failed to start server: {e}")
         raise
 
+
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(main())
 
+    asyncio.run(main())

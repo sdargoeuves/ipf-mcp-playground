@@ -9,12 +9,13 @@ import os
 
 dotenv.load_dotenv(dotenv.find_dotenv())
 
+
 async def setup_agent():
     ipf_mcp_server = MCPServerStdio(
         name="IP Fabric Assistant MCP Server",
         params={
             "command": "uv",
-            "args": ["run", "python","src/mcp_ipf/server.py"],
+            "args": ["run", "python", "src/mcp_ipf/server.py"],
         },
         client_session_timeout_seconds=60,
     )
@@ -36,6 +37,7 @@ async def setup_agent():
     )
     return ipfabric_agent, ipf_mcp_server
 
+
 async def chat_loop(agent):
     print("\nChat with the IP Fabric Agent (type 'exit' to quit):\n")
     while True:
@@ -44,6 +46,7 @@ async def chat_loop(agent):
             break
         result = await Runner.run(starting_agent=agent, input=msg)
         print(f"Assistant: {result.final_output}\n")
+
 
 # @traceable(name="ipf-mcp")
 async def main():
