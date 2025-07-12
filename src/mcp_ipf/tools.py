@@ -977,7 +977,7 @@ class GetConnectionInfoToolHandler(ToolHandler):
             # Try to get additional info if available
             try:
                 snapshots = self.ipf.get_snapshots()
-                loaded_snapshots = [snapshots[k] for k, v in snapshots.items() if (v.status == "done" and "$" not in k)]
+                loaded_snapshots = [v for k, v in snapshots.items() if (v.status == "done" and "$" not in k)]
                 if loaded_snapshots:
                     result["total_loaded_snapshots"] = len(loaded_snapshots)
                     result["latest_snapshot"] = snapshots["$last"].snapshot_id
