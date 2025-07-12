@@ -1,5 +1,6 @@
 import logging
 import os
+import traceback
 from collections.abc import Sequence
 from typing import Any
 
@@ -18,7 +19,6 @@ load_dotenv(override=True)
 # from . import tools
 
 import sys
-import os
 
 # Get the current directory of the script
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +28,6 @@ sys.path.append(os.path.abspath(os.path.join(current_dir, "..")))
 
 # Now you can import tools
 from mcp_ipf import tools
-
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -98,8 +97,6 @@ def register_tool_handlers():
         except Exception as e:
             logger.error(f"Failed to register {tool_name}: {e}")
             logger.error(f"Error type: {type(e)}")
-            import traceback
-
             logger.error(f"Traceback: {traceback.format_exc()}")
             # Continue with other tools
             continue
@@ -136,8 +133,6 @@ async def list_tools() -> list[Tool]:
             tools_list.append(tool_desc)
         except Exception as e:
             logger.error(f"Error getting tool description for {name}: {e}")
-            import traceback
-
             logger.error(f"Traceback: {traceback.format_exc()}")
 
     return tools_list

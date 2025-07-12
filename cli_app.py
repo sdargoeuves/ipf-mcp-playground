@@ -1,12 +1,12 @@
-from agents import Agent, Runner, set_trace_processors, Session, SQLiteSession
-from agents.mcp import MCPServerStdio
-from agents.extensions.models.litellm_model import LitellmModel
-from langsmith.wrappers import OpenAIAgentsTracingProcessor
 import asyncio
-import dotenv
 import os
 from pathlib import Path
-from typing import Optional
+
+import dotenv
+from agents import Agent, Runner, SQLiteSession, set_trace_processors
+from agents.extensions.models.litellm_model import LitellmModel
+from agents.mcp import MCPServerStdio
+from langsmith.wrappers import OpenAIAgentsTracingProcessor
 
 dotenv.load_dotenv(dotenv.find_dotenv())
 

@@ -1,6 +1,6 @@
 import json
 from collections.abc import Sequence
-from typing import Any, Dict, List, Optional
+from typing import Any, List
 
 from ipfabric import IPFClient
 from mcp.types import (
