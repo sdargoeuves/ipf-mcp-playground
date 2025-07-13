@@ -1,6 +1,6 @@
 # MCP server for IP Fabric
 
-MCP server to interact with IP Fabric via the python SDK.
+MCP server to interact with IP Fabric via the python SDK, initially inspired by the [MCP Server](https://github.com/MarkusPfundstein/mcp-obsidian) for Obsidian.
 
 <a href="https://ipfabric.io"><img width="380" height="200" src="https://ipfabric.io/wp-content/uploads/2024/06/IP_Fabric_Logo_Color-1.svg" alt="server for IP Fabric MCP server" /></a>
 
@@ -36,7 +36,7 @@ Use prompts like this:
 - "Get all Cisco devices from the inventory"
 - "Show me all interfaces on router 'core-01'"
 - "Find all routes to 192.168.1.0/24"
-- "Get devices with hostname containing 'switch' and show their platforms"
+- "Get devices with hostname containing 'switch'"
 - "Show me the routing table for devices in site 'headquarters'"
 - "What columns are available for the devices table?"
 
