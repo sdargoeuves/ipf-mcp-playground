@@ -1,26 +1,91 @@
 [project]
-name = "mcp-obsidian"
-version = "0.2.1"
-description = "MCP server to work with Obsidian via the remote REST plugin"
+name = "mcp-ipf"
+version = "0.1.0"
+description = "MCP server to work with IP Fabric via the python SDK"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
- "mcp>=1.1.0",
- "python-dotenv>=1.0.1",
- "requests>=2.32.3",
+    "ipfabric>=7.2.2",
+    "ipfabric-extensions>=0.5.11",
+    "langsmith>=0.4.5",
+    "mcp>=1.11.0",
+    "openai-agents[litellm]>=0.1.0",
+    "ruff>=0.12.2",
+    "streamlit>=1.46.1",
 ]
+
 [[project.authors]]
-name = "Markus Pfundstein"
-email = "markus@life-electronic.nl"
+name = "Seb d'Argoeuves"
+email = "sebastien.dargoeuves@ipfabric.io"
 
 [build-system]
 requires = [ "hatchling",]
 build-backend = "hatchling.build"
 
-[dependency-groups]
-dev = [
-    "pyright>=1.1.389",
+[project.scripts]
+mcp-ipf = "mcp_ipf:main"
+
+[tool.ruff]
+line-length = 125
+lint.select = [
+    "C4", # flake8-comprehensions
+    "D", # pydocstyle
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "I", # isort
+    "PL", # Pylint
+    "SIM", # flake8-simplify
 ]
 
-[project.scripts]
-mcp-obsidian = "mcp_obsidian:main"
+lint.fixable = ["ALL"]
+
+lint.ignore = [
+    # Missing docstring "D100" - "D107".
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "D205", # 1 blank line required between summary line and description.
+    "D202", # No blank lines allowed after function docstring.
+    "D203", # Use a blank line to separate the docstring from the class definition.
+    "D209", # Multi-line docstring closing quotes should be on a separate line.
+    "D212", # Multi-line docstring summary should start at the first line.
+    "D213", # Multi-line docstring summary should start at the second line.
+    "D400", # First line should end with a period.
+    "D401", # First line of docstring should be in imperative mood.
+    "D406", # Section name should end with a newline.
+    "D407", # Missing dashed underline after section.
+    "D413", # Missing blank line after last section.
+    "D415", # First line should end with a period, question mark, or exclamation point.
+    # "E501", # Line too long
+    "PLR0913", # Too many arguments
+    "SIM115", # Use context handler for opening files
+]
+show-fixes = true
+target-version = "py312"
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+[tool.uv.sources]
+openai-agents = { git = "https://github.com/openai/openai-agents-python", rev = "main" }
