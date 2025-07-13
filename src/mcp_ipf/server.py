@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import traceback
 from collections.abc import Sequence
 from typing import Any
@@ -18,11 +19,8 @@ load_dotenv(override=True)
 
 # from . import tools
 
-import sys
-
 # Get the current directory of the script
 current_dir = os.path.dirname(os.path.abspath(__file__))
-
 # Add the parent directory of 'src' to the system path
 sys.path.append(os.path.abspath(os.path.join(current_dir, "..")))
 
@@ -110,16 +108,7 @@ def add_tool_handler(tool_class: tools.ToolHandler):
 
 
 def get_tool_handler(name: str) -> tools.ToolHandler | None:
-    if name not in tool_handlers:
-        return None
-    return tool_handlers[name]
-
-
-# @app.list_tools()
-# async def list_tools() -> list[Tool]:
-#     """List available tools."""
-#     return [th.get_tool_description() for th in tool_handlers.values()]
-
+    return None if name not in tool_handlers else tool_handlers[name]
 
 # Also add this debug version of list_tools
 @app.list_tools()

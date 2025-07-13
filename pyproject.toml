@@ -14,17 +14,6 @@ dependencies = [
     "streamlit>=1.46.1",
 ]
 
-    # #  "langsmith>=0.4.4",
-    # #  "fastapi>=0.115.12",
-    # "ipfabric>=7.0.3",
-    # "ipfabric-extensions>=0.5.11",
-    # # "langsmith[openai-agents]>=0.3.14",
-    # "langsmith>=0.4.5",
-    # "mcp[cli]>=1.7.1",
-    # "openai-agents[litellm]>=0.1.0",
-    # "ruff>=0.12.2",
-    # "streamlit>=1.45.0",
-
 [[project.authors]]
 name = "Seb d'Argoeuves"
 email = "sebastien.dargoeuves@ipfabric.io"
@@ -33,15 +22,8 @@ email = "sebastien.dargoeuves@ipfabric.io"
 requires = [ "hatchling",]
 build-backend = "hatchling.build"
 
-# [dependency-groups]
-# dev = [
-#     "pyright>=1.1.389",
-# ]
-
 [project.scripts]
 mcp-ipf = "mcp_ipf:main"
-
-
 
 [tool.ruff]
 line-length = 125
@@ -84,7 +66,7 @@ lint.ignore = [
     "SIM115", # Use context handler for opening files
 ]
 show-fixes = true
-target-version = "py311"
+target-version = "py312"
 
 # Exclude a variety of commonly ignored directories.
 exclude = [
