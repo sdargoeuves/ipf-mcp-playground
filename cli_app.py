@@ -1,5 +1,7 @@
 import asyncio
 import os
+import threading
+import time
 from pathlib import Path
 
 import dotenv
@@ -12,6 +14,46 @@ dotenv.load_dotenv(dotenv.find_dotenv())
 
 DB_HISTORY_CONVERSATION = "ipfabric_conversations.db"
 DEFAULT_SESSION_ID = "ipfabric_user"
+
+
+class LoadingAnimation:
+    """Simple loading animation for CLI."""
+    
+    def __init__(self, message="🔍 Analyzing"):
+        self.message = message
+        self.running = False
+        self.thread = None
+        self.frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        # Alternative frames you can try:
+        # self.frames = ["🌍", "🌎", "🌏"]
+        # self.frames = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+        # self.frames = ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█", "▇", "▆", "▅", "▄", "▃", "▂"]
+        
+    def _animate(self):
+        """Animation loop."""
+        frame_index = 0
+        while self.running:
+            frame = self.frames[frame_index % len(self.frames)]
+            # Clear line and print animation
+            print(f"\r{frame} {self.message}...", end="", flush=True)
+            time.sleep(0.1)
+            frame_index += 1
+    
+    def start(self):
+        """Start the loading animation."""
+        if not self.running:
+            self.running = True
+            self.thread = threading.Thread(target=self._animate, daemon=True)
+            self.thread.start()
+    
+    def stop(self):
+        """Stop the loading animation and clear the line."""
+        if self.running:
+            self.running = False
+            if self.thread:
+                self.thread.join(timeout=0.2)
+            # Clear the animation line
+            print("\r" + " " * 50 + "\r", end="", flush=True)
 
 
 class ConversationManager:
@@ -188,12 +230,22 @@ async def chat_loop(agent: Agent):
             elif not msg:
                 continue
 
-            print("🤖 Assistant: ", end="", flush=True)
+            # Start loading animation
+            loader = LoadingAnimation("🤖 Assistant thinking")
+            loader.start()
 
-            # Use the session with Runner.run()
-            result = await Runner.run(starting_agent=agent, input=msg, session=session)
+            try:
+                # Use the session with Runner.run()
+                result = await Runner.run(starting_agent=agent, input=msg, session=session)
+                
+                # Stop animation and show response
+                loader.stop()
+                print(f"🤖 Assistant: {result.final_output}\n")
 
-            print(f"{result.final_output}\n")
+            except Exception as e:
+                loader.stop()
+                print(f"🤖 Assistant: ❌ Error: {e}")
+                print("Please try again or type 'exit' to quit.")
 
         except KeyboardInterrupt:
             print("\n\n👋 Goodbye!")

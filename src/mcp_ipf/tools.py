@@ -1017,7 +1017,11 @@ class GetAvailableColumnsToolHandler(ToolHandler):
                     "table_type": {
                         "type": "string",
                         "description": "The table type to inspect. Valid options: devices, interfaces, sites, vendors, platforms, routing, vlans, neighbors",
-                        "enum": ["devices", "interfaces", "sites", "vendors", "platforms", "routing", "vlans", "neighbors"],
+                        "enum": [
+                            "devices", "interfaces", "sites", "vendors",
+                            "managed_ipv4", "arp", "mac",
+                            "routing", "vlans", "neighbors"
+                        ],
                     }
                 },
                 "required": ["table_type"],

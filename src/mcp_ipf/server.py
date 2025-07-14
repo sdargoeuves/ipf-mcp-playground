@@ -17,8 +17,6 @@ from mcp.types import (
 
 load_dotenv(override=True)
 
-# from . import tools
-
 # Get the current directory of the script
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # Add the parent directory of 'src' to the system path
@@ -30,6 +28,11 @@ from mcp_ipf import tools
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mcp-ipf")
+
+# Silence verbose third-party loggers
+logging.getLogger("ipfabric").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("mcp.server.lowlevel.server").setLevel(logging.WARNING)
 
 app = Server("mcp-ipf")
 tool_handlers = {}
@@ -62,7 +65,7 @@ def register_tool_handlers():
     if ipf_client is None:
         raise RuntimeError("IPFClient not initialized. Call initialize_ipf_client() first.")
 
-    # Create and register IP Fabric tool handlers with individual error handling
+    # Define tool classes to register
     tool_classes = [
         ("GetFilterHelpToolHandler", tools.GetFilterHelpToolHandler),
         ("GetSnapshotsToolHandler", tools.GetSnapshotsToolHandler),
@@ -83,57 +86,56 @@ def register_tool_handlers():
         ("CompareTableToolHandler", tools.CompareTableToolHandler),
     ]
 
+    registered_count = 0
     for tool_name, tool_class in tool_classes:
         try:
-            logger.info(f"Registering tool: {tool_name}")
             tool_handler = tool_class(ipf_client)
-
-            # Test the tool description to catch schema issues early
-            tool_description = tool_handler.get_tool_description()
-            logger.info(f"Tool {tool_name} description: {tool_description}")
-
+            
+            # Validate tool description during registration
+            tool_handler.get_tool_description()
+            
             add_tool_handler(tool_handler)
-            logger.info(f"Successfully registered: {tool_name}")
+            registered_count += 1
+            logger.debug(f"Registered tool: {tool_name}")
 
         except Exception as e:
             logger.error(f"Failed to register {tool_name}: {e}")
-            logger.error(f"Error type: {type(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
-            # Continue with other tools
             continue
 
-    logger.info(f"Registered {len(tool_handlers)} tool handlers")
+    logger.info(f"Successfully registered {registered_count}/{len(tool_classes)} tools")
 
 
 def add_tool_handler(tool_class: tools.ToolHandler):
+    """Add a tool handler to the global registry."""
     global tool_handlers
     tool_handlers[tool_class.name] = tool_class
 
 
 def get_tool_handler(name: str) -> tools.ToolHandler | None:
-    return None if name not in tool_handlers else tool_handlers[name]
+    """Get a tool handler by name."""
+    return tool_handlers.get(name)
 
 
-# Also add this debug version of list_tools
 @app.list_tools()
 async def list_tools() -> list[Tool]:
     """List available tools."""
     tools_list = []
     for name, handler in tool_handlers.items():
         try:
-            tool_desc = handler.get_tool_description()
-            logger.info(f"Adding tool to list: {name}")
-            tools_list.append(tool_desc)
+            tools_list.append(handler.get_tool_description())
         except Exception as e:
             logger.error(f"Error getting tool description for {name}: {e}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
-
+            # Continue with other tools instead of failing completely
+            continue
+    
+    logger.debug(f"Returning {len(tools_list)} available tools")
     return tools_list
 
 
 @app.call_tool()
 async def call_tool(name: str, arguments: Any) -> Sequence[TextContent | ImageContent | EmbeddedResource]:
-    """Handle tool calls for command line run."""
+    """Handle tool calls."""
     if not isinstance(arguments, dict):
         raise RuntimeError("arguments must be dictionary")
 
@@ -144,16 +146,20 @@ async def call_tool(name: str, arguments: Any) -> Sequence[TextContent | ImageCo
     try:
         return tool_handler.run_tool(arguments)
     except Exception as e:
-        logger.error(str(e))
-        raise RuntimeError(f"Caught Exception. Error: {str(e)}")
+        logger.error(f"Tool {name} failed: {e}")
+        raise RuntimeError(f"Tool execution failed: {e}")
 
 
 async def main():
     """Main entry point for the MCP server."""
     try:
+        logger.info("Starting IP Fabric MCP server...")
+        
         # Initialize IPFClient and register tools
         initialize_ipf_client()
         register_tool_handlers()
+        
+        logger.info("Server ready, starting stdio server...")
 
         # Import here to avoid issues with event loops
         from mcp.server.stdio import stdio_server
@@ -167,5 +173,4 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
-
     asyncio.run(main())
