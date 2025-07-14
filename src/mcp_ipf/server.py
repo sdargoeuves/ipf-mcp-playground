@@ -75,9 +75,12 @@ def register_tool_handlers():
         ("GetVlansToolHandler", tools.GetVlansToolHandler),
         ("GetRoutingTableToolHandler", tools.GetRoutingTableToolHandler),
         ("GetManagedIPv4ToolHandler", tools.GetManagedIPv4ToolHandler),
+        ("GetArpToolHandler", tools.GetArpToolHandler),
+        ("GetMacToolHandler", tools.GetMacToolHandler),
         ("GetNeighborsToolHandler", tools.GetNeighborsToolHandler),
         ("GetAvailableColumnsToolHandler", tools.GetAvailableColumnsToolHandler),
         ("GetConnectionInfoToolHandler", tools.GetConnectionInfoToolHandler),
+        ("CompareTableToolHandler", tools.CompareTableToolHandler),
     ]
 
     for tool_name, tool_class in tool_classes:

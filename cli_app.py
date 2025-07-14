@@ -75,7 +75,7 @@ class ConversationManager:
         print("3. Exit")
 
         while True:
-            choice = input("\nSelect option (1-3): ").strip()
+            choice = input("\nSelect option (1-3), default is 1: ").strip() or "1"
 
             if choice == "1":
                 print("Loading existing conversations...")

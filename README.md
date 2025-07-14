@@ -20,10 +20,13 @@ The server implements multiple tools to interact with IP Fabric:
 - **ipf_get_vendors**: Gets vendor inventory data with optional filters
 - **ipf_get_routing_table**: Gets routing table data with optional filters
 - **ipf_get_managed_ipv4**: Gets managed IPv4 data with optional filters
+- **ipf_get_arp**: Gets ARP data with optional filters
+- **ipf_get_mac**: Gets MAC address data with optional filters
 - **ipf_get_vlans**: Gets VLAN data with optional filters
 - **ipf_get_neighbors**: Gets neighbor discovery data with optional filters
 - **ipf_get_available_columns**: Gets available columns for specific table types
 - **ipf_get_connection_info**: Gets IP Fabric connection information and status
+- **ipf_compare_table**: Compares one table between two snapshots
 
 ### Example prompts
 
