@@ -110,6 +110,7 @@ def add_tool_handler(tool_class: tools.ToolHandler):
 def get_tool_handler(name: str) -> tools.ToolHandler | None:
     return None if name not in tool_handlers else tool_handlers[name]
 
+
 # Also add this debug version of list_tools
 @app.list_tools()
 async def list_tools() -> list[Tool]:

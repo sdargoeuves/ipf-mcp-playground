@@ -739,6 +739,143 @@ class GetManagedIPv4ToolHandler(ToolHandler):
             return self._handle_exception(e, "retrieve managed IPv4 entries")
 
 
+class GetArpTableToolHandler(ToolHandler):
+    def __init__(self, ipf_client: IPFClient):
+        super().__init__("ipf_get_arp_table", ipf_client)
+
+    def get_tool_description(self):
+        return Tool(
+            name=self.name,
+            description="""Get managed ARP table entries from IP Fabric
+
+            Retrieves all configured ARP table entries across the network,
+            including IP-MAC bindings and interface assignments. Critical for IP
+            address management and troubleshooting.
+
+            Args:
+                filters: Optional filtering (e.g., {"ip": ["eq", "10.0.0.1"]})
+                columns: Optional list to limit returned columns
+
+            Returns:
+                ARP table data with Device, IP address, MAC address, VRF, Vlan and interface assignments
+            """,
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "filters": {
+                        "type": "object",
+                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns.",
+                    },
+                    "columns": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Specific columns to return, or to use with the filters. If not specified, all columns will be returned.",
+                        "available_columns": {
+                            "id": "string",
+                            "hostname": "string",
+                            "intName": "string",
+                            "ip": "string",
+                            "mac": "string",
+                            "proxy": "boolean",
+                            "siteName": "string",
+                            "sn": "string",
+                            "vendor": "string",
+                            "vlanId": "integer",
+                            "vrf": "string"
+                        },
+                    },
+                },
+                "required": [],
+            },
+        )
+
+    def run_tool(self, args: dict) -> Sequence[TextContent]:
+        try:
+            filters = args.get("filters", {})
+            columns = args.get("columns")
+
+            result = self.ipf.technology.addressing.arp_table.all(filters=filters, columns=columns)
+
+            return self._format_response(result, message=f"Retrieved {len(result) if result else 0} ARP table entries")
+        except Exception as e:
+            return self._handle_exception(e, "retrieve ARP table entries")
+
+
+class GetMacTableToolHandler(ToolHandler):
+    def __init__(self, ipf_client: IPFClient):
+        super().__init__("ipf_get_mac_table", ipf_client)
+
+    def get_tool_description(self):
+        return Tool(
+            name=self.name,
+            description="""Get MAC table entries from IP Fabric
+
+            Retrieves all configured MAC table entries across the network,
+            including MAC and interface assignments.
+
+            Args:
+                filters: Optional filtering (e.g., {"mac": ["eq", "0011.2233.4455"]})
+                columns: Optional list to limit returned columns
+
+            Returns:
+                MAC table data with Device, IP address, MAC address, VRF, Vlan and interface assignments
+            """,
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "filters": {
+                        "type": "object",
+                        "description": "Filter criteria using IP Fabric filter syntax. Use ipf_get_filter_help for syntax help, based on available_columns.",
+                    },
+                    "columns": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Specific columns to return, or to use with the filters. If not specified, all columns will be returned.",
+                        "available_columns": {
+                            "id": "string",
+                            "edge": "boolean",
+                            "hostname": "string",
+                            "intName": "string",
+                            "mac": "string",
+                            "siteName": "string",
+                            "sn": "string",
+                            "source": "string",
+                            "type": "string",
+                            "user": "boolean",
+                            "vendor": "string",
+                            "vlan": "integer",
+                            "vni": "integer",
+                            "vxlans": [
+                                {
+                                    "intName": "string",
+                                    "vtepIp": "string"
+                                }
+                            ],
+                            "fabricPath": {
+                                "localId": "integer",
+                                "subswitchId": "integer",
+                                "switchId": "integer"
+                            },
+                            "virtualBridge": "string"
+                        },
+                    },
+                },
+                "required": [],
+            },
+        )
+
+    def run_tool(self, args: dict) -> Sequence[TextContent]:
+        try:
+            filters = args.get("filters", {})
+            columns = args.get("columns")
+
+            result = self.ipf.technology.addressing.mac_table.all(filters=filters, columns=columns)
+
+            return self._format_response(result, message=f"Retrieved {len(result) if result else 0} MAC table entries")
+        except Exception as e:
+            return self._handle_exception(e, "retrieve MAC table entries")
+
+
 class GetVlansToolHandler(ToolHandler):
     def __init__(self, ipf_client: IPFClient):
         super().__init__("ipf_get_vlans", ipf_client)
@@ -863,6 +1000,183 @@ class GetNeighborsToolHandler(ToolHandler):
         except Exception as e:
             return self._handle_exception(e, "retrieve neighbors")
 
+class CompareTableToolHandler(ToolHandler):
+    def __init__(self, ipf_client: IPFClient):
+        super().__init__("ipf_compare_table_between", ipf_client)
+
+    def get_tool_description(self):
+        return Tool(
+            name=self.name,
+            description="""Compare the same table between two IP Fabric snapshots
+            
+            Compares a specific table from the current active snapshot to the same
+            table in another snapshot, identifying added, removed, and changed records.
+            This is essential for tracking network changes over time, compliance 
+            monitoring, and change impact analysis.
+            
+            By default, compares against $prev (previous snapshot), but if $prev
+            is the same as current snapshot, it will use $last instead. You can
+            also specify a specific snapshot_id to compare against.
+
+            Here is an example to perform a diff of the IPv4 routing table
+            between the current snapshot and the previous one:
+            ipf.technology.routing.routes_ipv4.compare(
+                snapshot_id="$",
+                columns=["hostname", "network", "nexthop"],
+                nested_columns_ignore=["age", "vtepIp", "label", "oid", "vni", "vrfLeak", "label"]
+            )
+
+            Here is an example to compare devices based on hostname only:            
+            In [32]: ipf.inventory.devices.compare(snapshot_id="$prev", columns=['hostname'])
+            Out[32]:
+            
+            {
+                'added': [{'hostname': 'fw2'}, {'hostname': 'fw3'}, {'hostname': 'fw1'}],
+                'removed': [
+                    {'hostname': 'fw2/netlab'},
+                    {'hostname': 'fw3/netlab'},
+                    {'hostname': 'fw1/root'},
+                    {'hostname': 'fw3/root'},
+                    {'hostname': 'fw1/netlab'},
+                    {'hostname': 'fw2/root'}
+                ]
+            }
+
+            Args:
+                table_path: Path to the table to compare (e.g., "technology.vlans.device_detail")
+                snapshot_id: Optional snapshot ID to compare against (defaults to smart $prev/$last selection)
+                columns: Optional list of columns to include in comparison
+                columns_ignore: Optional list of columns to ignore in comparison
+                unique_keys: Optional list of columns to use as unique identifiers
+                nested_columns_ignore: Optional list of nested columns to ignore
+                table_filters: Optional filters to apply before comparison
+            
+            Returns:
+                Dictionary with 'added', 'removed', and 'changed' keys containing
+                the differences between snapshots
+            """,
+
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "table_path": {
+                        "type": "string",
+                        "description": """
+                            Dot-notation path to the table to compare, like those tables:
+                            inventory.devices
+                            inventory.interfaces
+                            inventory.hosts
+                            inventory.sites
+                            technology.routing.routes_ipv4
+                            technology.neighbors.neighbors_all
+                            technology.addressing.managed_ip_ipv4
+                            technology.addressing.arp_table
+                            technology.addressing.mac_table
+                            technology.vlans.device_detail
+                        """,
+                        "examples": [
+                            "ipf.inventory.devices.compare(snapshot_id='$prev', columns=['hostname']) # to compare devices purely based on hostname, it will ignore all other columns",
+                            "ipf.inventory.devices.compare(snapshot_id='$prev', columns=['hostname', 'sn', 'loginIpv4'])",
+                            "ipf.inventory.interfaces.compare()",
+                            "ipf.inventory.hosts.compare()",
+                            "ipf.inventory.sites.compare()",
+                            "ipf.technology.routing.routes_ipv4.compare()",
+                            "ipf.technology.neighbors.neighbors_all.compare()",
+                            "ipf.technology.addressing.managed_ip_ipv4.compare()",
+                            "ipf.technology.vlans.device_detail.compare()",
+                        ]
+                    },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": "Optional snapshot ID to compare against. If not provided, will use $prev, or $last if $prev is the same as current snapshot"
+                    },
+                    "columns": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of columns to include in the comparison. If not specified, all columns will be compared."
+                    },
+                    "columns_ignore": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of columns to ignore during comparison. By default, 'id' column is ignored."
+                    },
+                    "unique_keys": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of columns to use as unique identifiers for matching records. If not specified, all columns will be used as primary key."
+                    },
+                    "nested_columns_ignore": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of nested columns to ignore during comparison."
+                    },
+                    "table_filters": {
+                        "type": "object",
+                        "description": "Optional filters to apply to the table before comparison using IP Fabric filter syntax."
+                    }
+                },
+                "required": ["table_path"]
+            },
+        )
+def run_tool(ipf: IPFClient, args: dict):
+    try:
+        table_path = args["table_path"]
+        snapshot_id = args.get("snapshot_id")
+        columns = args.get("columns")
+        columns_ignore = args.get("columns_ignore")
+        unique_keys = args.get("unique_keys")
+        nested_columns_ignore = args.get("nested_columns_ignore")
+        table_filters = args.get("table_filters", {})
+
+        # Smart snapshot selection if not provided
+        if not snapshot_id:
+            prev_snapshot_id = ipf.snapshots['$prev'].snapshot_id
+
+            if ipf.snapshot_id == prev_snapshot_id:
+                # If $prev is the same as current, use $last instead
+                snapshot_id = ipf.snapshots['$last'].snapshot_id
+                selected_snapshot = "$last"
+            else:
+                # Use $prev as default
+                snapshot_id = prev_snapshot_id
+                selected_snapshot = "$prev"
+        elif snapshot_id == ipf.snapshot_id:
+            return (None, "Cannot compare against the current snapshot")
+        else:
+            selected_snapshot = snapshot_id
+
+        # Navigate to the specified table using dot notation
+        table_obj = ipf
+        for part in table_path.split('.'):
+            table_obj = getattr(table_obj, part)
+
+        # Call the compare method with the provided parameters
+        result = table_obj.compare(
+            snapshot_id=snapshot_id,
+            columns=columns,
+            columns_ignore=columns_ignore,
+            unique_keys=unique_keys,
+            nested_columns_ignore=nested_columns_ignore,
+            filters=table_filters
+        )
+
+        # Format the response with summary statistics
+        summary_parts = []
+        if result:
+            if 'added' in result:
+                summary_parts.append(f"{len(result['added'])} added")
+            if 'removed' in result:
+                summary_parts.append(f"{len(result['removed'])} removed")
+            if 'changed' in result:
+                summary_parts.append(f"{len(result['changed'])} changed")
+
+        summary = f"Comparison completed for table '{table_path}' against snapshot '{selected_snapshot}': {', '.join(summary_parts) if summary_parts else 'No differences found'}"
+
+        return (result, summary)
+    except AttributeError as e:
+        return (e, f"access table '{table_path}' - verify the table path is correct")
+    except Exception as e:
+        return (e, f"compare snapshots for table '{table_path}'")
 
 class GetAvailableColumnsToolHandler(ToolHandler):
     def __init__(self, ipf_client: IPFClient):
