@@ -42,19 +42,19 @@ class ToolHandler:
     def run_tool(self, args: dict) -> Sequence[TextContent | ImageContent | EmbeddedResource]:
         raise NotImplementedError()
 
-    def _format_response(self, data: Any, success: bool = True, message: str = "") -> List[TextContent]:
+    def _format_response(self, data: Any, success: bool = True, message: str = "", snapshot_id: str | None = None) -> List[TextContent]:
         """Helper method to format responses consistently."""
         if success:
             response = {
                 "success": True,
                 "data": data,
-                "current_snapshot": self.ipf.snapshot_id,
+                "current_snapshot": snapshot_id or self.ipf.snapshot_id,
             }
         else:
             response = {
                 "success": False,
                 "error": str(data),
-                "current_snapshot": self.ipf.snapshot_id,
+                "current_snapshot": snapshot_id or self.ipf.snapshot_id,
             }
         if message:
             response["message"] = message
@@ -242,7 +242,8 @@ class GetDevicesToolHandler(ToolHandler):
             Args:
                 filters: Optional filtering using IP Fabric syntax (e.g., {"vendor": ["eq", "cisco"]})
                 columns: Optional list to limit returned columns for performance
-            
+                snapshot_id: snapshot ID to query against, use if you want to query against a specific snapshot instead of the current one.
+
             Returns:
                 Device inventory with hostname, IP, vendor, model, version, site, and status data
             """,
@@ -299,6 +300,14 @@ class GetDevicesToolHandler(ToolHandler):
                             "credentialsNotes": "string",
                         },
                     },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not specified, the current snapshot (ipf.snapshot_id) will be used
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
+                    },
                 },
                 "required": [],
             },
@@ -308,8 +317,9 @@ class GetDevicesToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
+            snapshot_id = args.get("snapshot_id", self.ipf.snapshot_id)
 
-            result = self.ipf.inventory.devices.all(filters=filters, columns=columns)
+            result = self.ipf.inventory.devices.all(filters=filters, columns=columns, snapshot_id=snapshot_id)
 
             return self._format_response(result, message=f"Retrieved {len(result) if result else 0} devices")
         except Exception as e:
@@ -386,6 +396,14 @@ class GetInterfacesToolHandler(ToolHandler):
                             "lastOutputValue": "integer",
                         },
                     },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not specified, the current snapshot (ipf.snapshot_id) will be used
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
+                    },
                 },
                 "required": [],
             },
@@ -395,8 +413,9 @@ class GetInterfacesToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
+            snapshot_id = args.get("snapshot_id", self.ipf.snapshot_id)
 
-            result = self.ipf.inventory.interfaces.all(filters=filters, columns=columns)
+            result = self.ipf.inventory.interfaces.all(filters=filters, columns=columns, snapshot_id=snapshot_id)
 
             return self._format_response(result, message=f"Retrieved {len(result) if result else 0} interfaces")
         except Exception as e:
@@ -458,6 +477,14 @@ class GetHostsToolHandler(ToolHandler):
                             "vrf": "string",
                         },
                     },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not specified, the current snapshot (ipf.snapshot_id) will be used
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
+                    },
                 },
                 "required": [],
             },
@@ -467,8 +494,9 @@ class GetHostsToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
+            snapshot_id = args.get("snapshot_id", self.ipf.snapshot_id)
 
-            result = self.ipf.inventory.hosts.all(filters=filters, columns=columns)
+            result = self.ipf.inventory.hosts.all(filters=filters, columns=columns, snapshot_id=snapshot_id)
 
             return self._format_response(result, message=f"Retrieved {len(result) if result else 0} hosts")
         except Exception as e:
@@ -522,6 +550,14 @@ class GetSitesToolHandler(ToolHandler):
                             "vlanCount": "integer",
                         },
                     },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not specified, the current snapshot (ipf.snapshot_id) will be used
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
+                    },
                 },
                 "required": [],
             },
@@ -531,8 +567,9 @@ class GetSitesToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
+            snapshot_id = args.get("snapshot_id", self.ipf.snapshot_id)
 
-            result = self.ipf.inventory.sites.all(filters=filters, columns=columns)
+            result = self.ipf.inventory.sites.all(filters=filters, columns=columns, snapshot_id=snapshot_id)
 
             return self._format_response(result, message=f"Retrieved {len(result) if result else 0} sites")
         except Exception as e:
@@ -578,6 +615,14 @@ class GetVendorsToolHandler(ToolHandler):
                             "vendor": "string",
                         },
                     },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not specified, the current snapshot (ipf.snapshot_id) will be used
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
+                    },
                 },
                 "required": [],
             },
@@ -587,8 +632,9 @@ class GetVendorsToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
+            snapshot_id = args.get("snapshot_id", self.ipf.snapshot_id)
 
-            result = self.ipf.inventory.vendors.all(filters=filters, columns=columns)
+            result = self.ipf.inventory.vendors.all(filters=filters, columns=columns, snapshot_id=snapshot_id)
 
             return self._format_response(result, message=f"Retrieved {len(result) if result else 0} vendors")
         except Exception as e:
@@ -654,6 +700,14 @@ class GetRoutingTableToolHandler(ToolHandler):
                             "vrf": "string",
                         },
                     },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not specified, the current snapshot (ipf.snapshot_id) will be used
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
+                    },
                 },
                 "required": [],
             },
@@ -663,8 +717,9 @@ class GetRoutingTableToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
+            snapshot_id = args.get("snapshot_id", self.ipf.snapshot_id)
 
-            result = self.ipf.technology.routing.routes_ipv4.all(filters=filters, columns=columns)
+            result = self.ipf.technology.routing.routes_ipv4.all(filters=filters, columns=columns, snapshot_id=snapshot_id)
 
             return self._format_response(result, message=f"Retrieved {len(result) if result else 0} routing entries")
         except Exception as e:
@@ -722,6 +777,14 @@ class GetManagedIPv4ToolHandler(ToolHandler):
                             "vrf": "string",
                         },
                     },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not specified, the current snapshot (ipf.snapshot_id) will be used
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
+                    },
                 },
                 "required": [],
             },
@@ -731,8 +794,9 @@ class GetManagedIPv4ToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
+            snapshot_id = args.get("snapshot_id", self.ipf.snapshot_id)
 
-            result = self.ipf.technology.addressing.managed_ip_ipv4.all(filters=filters, columns=columns)
+            result = self.ipf.technology.addressing.managed_ip_ipv4.all(filters=filters, columns=columns, snapshot_id=snapshot_id)
 
             return self._format_response(result, message=f"Retrieved {len(result) if result else 0} managed IPv4 entries")
         except Exception as e:
@@ -784,6 +848,14 @@ class GetArpToolHandler(ToolHandler):
                             "vrf": "string",
                         },
                     },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not specified, the current snapshot (ipf.snapshot_id) will be used
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
+                    },
                 },
                 "required": [],
             },
@@ -793,8 +865,9 @@ class GetArpToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
+            snapshot_id = args.get("snapshot_id", self.ipf.snapshot_id)
 
-            result = self.ipf.technology.addressing.arp_table.all(filters=filters, columns=columns)
+            result = self.ipf.technology.addressing.arp_table.all(filters=filters, columns=columns, snapshot_id=snapshot_id)
 
             return self._format_response(result, message=f"Retrieved {len(result) if result else 0} ARP table entries")
         except Exception as e:
@@ -850,6 +923,14 @@ class GetMacToolHandler(ToolHandler):
                             "virtualBridge": "string",
                         },
                     },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not specified, the current snapshot (ipf.snapshot_id) will be used
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
+                    },
                 },
                 "required": [],
             },
@@ -859,8 +940,9 @@ class GetMacToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
+            snapshot_id = args.get("snapshot_id", self.ipf.snapshot_id)
 
-            result = self.ipf.technology.addressing.mac_table.all(filters=filters, columns=columns)
+            result = self.ipf.technology.addressing.mac_table.all(filters=filters, columns=columns, snapshot_id=snapshot_id)
 
             return self._format_response(result, message=f"Retrieved {len(result) if result else 0} MAC table entries")
         except Exception as e:
@@ -910,6 +992,14 @@ class GetVlansToolHandler(ToolHandler):
                             "vlanName": "string",
                         },
                     },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not specified, the current snapshot (ipf.snapshot_id) will be used
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
+                    },
                 },
                 "required": [],
             },
@@ -919,8 +1009,9 @@ class GetVlansToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
+            snapshot_id = args.get("snapshot_id", self.ipf.snapshot_id)
 
-            result = self.ipf.technology.vlans.device_detail.all(filters=filters, columns=columns)
+            result = self.ipf.technology.vlans.device_detail.all(filters=filters, columns=columns, snapshot_id=snapshot_id)
 
             return self._format_response(result, message=f"Retrieved {len(result) if result else 0} VLAN entries")
         except Exception as e:
@@ -975,6 +1066,14 @@ class GetNeighborsToolHandler(ToolHandler):
                             "subnet": "string",
                         },
                     },
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not specified, the current snapshot (ipf.snapshot_id) will be used
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
+                    },
                 },
                 "required": [],
             },
@@ -984,8 +1083,9 @@ class GetNeighborsToolHandler(ToolHandler):
         try:
             filters = args.get("filters", {})
             columns = args.get("columns")
+            snapshot_id = args.get("snapshot_id", self.ipf.snapshot_id)
 
-            result = self.ipf.technology.neighbors.neighbors_all.all(filters=filters, columns=columns)
+            result = self.ipf.technology.neighbors.neighbors_all.all(filters=filters, columns=columns, snapshot_id=snapshot_id)
 
             return self._format_response(result, message=f"Retrieved {len(result) if result else 0} neighbor entries")
         except Exception as e:
@@ -1209,7 +1309,11 @@ class CompareTableToolHandler(ToolHandler):
                     },
                     "snapshot_id": {
                         "type": "string",
-                        "description": "Optional snapshot ID to compare against. If not provided, will use $prev, or $last if $prev is the same as current snapshot",
+                        "description": """
+                            The ID of the snapshot to query against (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e')
+                            If not provided, will use $prev, or $last if $prev is the same as current snapshot
+                            Use ipf_get_snapshots() to see available snapshot IDs if needed.
+                        """
                     },
                     "columns": {
                         "type": "array",
@@ -1301,23 +1405,160 @@ class CompareTableToolHandler(ToolHandler):
         except Exception as e:
             return self._handle_exception(e, f"compare snapshots for table '{table_path}'")
 
-# Registry of all tool handlers for easy access
-TOOL_HANDLERS = {
-    "ipf_get_filter_help": GetFilterHelpToolHandler,
-    "ipf_get_snapshots": GetSnapshotsToolHandler,
-    "ipf_set_snapshot": SetSnapshotToolHandler,
-    "ipf_get_devices": GetDevicesToolHandler,
-    "ipf_get_interfaces": GetInterfacesToolHandler,
-    "ipf_get_hosts": GetHostsToolHandler,
-    "ipf_get_sites": GetSitesToolHandler,
-    "ipf_get_vendors": GetVendorsToolHandler,
-    "ipf_get_routing_table": GetRoutingTableToolHandler,
-    "ipf_get_managed_ipv4": GetManagedIPv4ToolHandler,
-    "ipf_get_arp": GetArpToolHandler,
-    "ipf_get_mac": GetMacToolHandler,
-    "ipf_get_vlans": GetVlansToolHandler,
-    "ipf_get_neighbors": GetNeighborsToolHandler,
-    "ipf_get_available_columns": GetAvailableColumnsToolHandler,
-    "ipf_get_connection_info": GetConnectionInfoToolHandler,
-    "ipf_compare_table": CompareTableToolHandler,
-}
+class DiffRoutesToolHandler(ToolHandler):
+    def __init__(self, ipf_client: IPFClient):
+        super().__init__("ipf_diff_routes", ipf_client)
+
+    def get_tool_description(self):
+        return Tool(
+            name=self.name,
+            description="""Compare IPv4 routing tables between two IP Fabric snapshots
+            
+            Compares IPv4 routes between two specified snapshots and returns a structured 
+            summary of changes. This tool provides detailed analysis of route additions, 
+            removals, and modifications between snapshots, making it ideal for network 
+            change tracking and troubleshooting.
+            
+            The comparison uses a composite key of hostname|vrf|network to identify 
+            unique routes and compares protocol, nexthop IP, interface name, and metric 
+            for changes.
+            
+            Example usage:
+            - Compare current snapshot with previous: diff_routes("current_id", "$prev")
+            - Compare two specific snapshots: diff_routes("2024-01-15", "2024-01-16")
+            
+            Args:
+                snapshot_a: The ID of the first snapshot
+                snapshot_b: The ID of the second snapshot to compare against snapshot_a
+            
+            Returns:
+                Dictionary containing:
+                - snapshot_a_id/snapshot_b_id: The snapshot IDs used
+                - added: List of route keys added in snapshot_b
+                - removed: List of route keys removed in snapshot_b  
+                - changed: List of modified routes with detailed change information
+                - summary_counts: Count of added, removed, and modified routes
+            """,
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "snapshot_a": {
+                        "type": "string",
+                        "description": "The ID of the first snapshot (e.g., 'cf2d7763-85b3-4d97-afdb-e66eb6e4125e' or use '$prev', '$last')",
+                        "examples": ["cf2d7763-85b3-4d97-afdb-e66eb6e4125e", "$prev", "$last"]
+                    },
+                    "snapshot_b": {
+                        "type": "string", 
+                        "description": "The ID of the second snapshot to compare against snapshot_a",
+                        "examples": ["92feb80a-c473-4812-a0a4-32ebe79f05e9", "$prev", "$last"]
+                    }
+                },
+                "required": ["snapshot_a", "snapshot_b"]
+            }
+        )
+
+    def run_tool(self, args: dict):
+        try:
+            snapshot_a = args["snapshot_a"]
+            snapshot_b = args["snapshot_b"]
+            
+            # Validate that we're not comparing the same snapshot
+            if snapshot_a == snapshot_b:
+                return self._format_response(
+                    data=None,
+                    success=False,
+                    message="Cannot compare the same snapshot against itself"
+                )
+            
+            # Fetch route data from both snapshots
+            routes_a = self.ipf.technology.routing.routes_ipv4.all(snapshot_id=snapshot_a)
+            routes_b = self.ipf.technology.routing.routes_ipv4.all(snapshot_id=snapshot_b)
+            
+            # Process the comparison
+            result = self._compare_routes(routes_a, routes_b, snapshot_a, snapshot_b)
+            
+            return self._format_response(
+                data=result,
+                success=True,
+                message=result["message"]
+            )
+            
+        except Exception as e:
+            return self._handle_exception(e, f"compare routes between snapshots '{snapshot_a}' and '{snapshot_b}'")
+
+    def _compare_routes(self, routes_a: list, routes_b: list, snapshot_a: str, snapshot_b: str) -> dict:
+        """
+        Internal method to perform the actual route comparison logic.
+        
+        Args:
+            routes_a: List of routes from snapshot A
+            routes_b: List of routes from snapshot B
+            snapshot_a: ID of snapshot A
+            snapshot_b: ID of snapshot B
+            
+        Returns:
+            Dictionary with comparison results
+        """
+        def make_key(route):
+            """Create a unique key for a route using hostname|vrf|network"""
+            return f"{route.get('hostname')}|{route.get('vrf')}|{route.get('network')}"
+
+        def simplify(route):
+            """Simplify route data to essential fields for comparison"""
+            nexthop_ip = None
+            int_name = None
+            
+            # Safely access nested nexthop data
+            nexthop = route.get("nexthop")
+            if nexthop and len(nexthop) > 0 and nexthop[0]:
+                nexthop_ip = nexthop[0].get("ip")
+                int_name = nexthop[0].get("intName")
+            
+            return {
+                "protocol": route.get("protocol"),
+                "nexthop_ip": nexthop_ip,
+                "intName": int_name,
+                "metric": route.get("nhLowestMetric"),
+            }
+
+        # Create dictionaries for comparison
+        dict_a = {make_key(r): simplify(r) for r in routes_a}
+        dict_b = {make_key(r): simplify(r) for r in routes_b}
+
+        added = []
+        removed = []
+        changed = []
+
+        # Find removed and changed routes
+        for key in dict_a:
+            if key not in dict_b:
+                removed.append(key)
+            elif dict_a[key] != dict_b[key]:
+                changes = {
+                    field: {"from": dict_a[key].get(field), "to": dict_b[key].get(field)}
+                    for field in dict_a[key]
+                    if dict_a[key].get(field) != dict_b[key].get(field)
+                }
+                if changes:
+                    changed.append({"route": key, "changes": changes})
+
+        # Find added routes
+        for key in dict_b:
+            if key not in dict_a:
+                added.append(key)
+
+        summary_counts = {
+            "added": len(added),
+            "removed": len(removed),
+            "modified": len(changed),
+        }
+
+        return {
+            "snapshot_a_id": snapshot_a,
+            "snapshot_b_id": snapshot_b,
+            "added": added,
+            "removed": removed,
+            "changed": changed,
+            "summary_counts": summary_counts,
+            "message": f"Route table comparison complete. Found {summary_counts['added']} added, {summary_counts['removed']} removed, and {summary_counts['modified']} modified routes."
+        }

@@ -1,3 +1,4 @@
+# server.py
 import logging
 import os
 import sys
@@ -22,8 +23,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # Add the parent directory of 'src' to the system path
 sys.path.append(os.path.abspath(os.path.join(current_dir, "..")))
 
-# Now you can import tools
+# Now you can import tools and registry
 from mcp_ipf import tools
+from mcp_ipf import registry
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -40,7 +42,6 @@ tool_handlers = {}
 # Global variable to hold the IPFClient instance
 ipf_client = None
 
-
 def initialize_ipf_client():
     """Initialize the IPFClient with environment variables."""
     global ipf_client
@@ -48,7 +49,7 @@ def initialize_ipf_client():
     ipf_token = os.getenv("IPF_TOKEN", None)
     ipf_url = os.getenv("IPF_URL", None)
     ipf_verify = os.getenv("IPF_VERIFY", "true").lower() in ("true", "1", "yes")
-    ipf_timeout = int(os.getenv("IPF_TIMEOUT", 60))  # Default to 60 seconds if not set
+    ipf_timeout = int(os.getenv("IPF_TIMEOUT", 60))
 
     if not ipf_token:
         raise ValueError(f"IPF_TOKEN environment variable required. Working directory: {os.getcwd()}")
@@ -59,63 +60,30 @@ def initialize_ipf_client():
     ipf_client = IPFClient(base_url=ipf_url, auth=ipf_token, verify=ipf_verify, timeout=ipf_timeout)
     logger.info(f"IPFClient initialized for URL: {ipf_url}")
 
-
 def register_tool_handlers():
-    """Register all IP Fabric tool handlers."""
+    """Register all IP Fabric tool handlers using automatic discovery."""
     if ipf_client is None:
         raise RuntimeError("IPFClient not initialized. Call initialize_ipf_client() first.")
 
-    # Define tool classes to register
-    tool_classes = [
-        ("GetFilterHelpToolHandler", tools.GetFilterHelpToolHandler),
-        ("GetSnapshotsToolHandler", tools.GetSnapshotsToolHandler),
-        ("SetSnapshotToolHandler", tools.SetSnapshotToolHandler),
-        ("GetDevicesToolHandler", tools.GetDevicesToolHandler),
-        ("GetInterfacesToolHandler", tools.GetInterfacesToolHandler),
-        ("GetHostsToolHandler", tools.GetHostsToolHandler),
-        ("GetSitesToolHandler", tools.GetSitesToolHandler),
-        ("GetVendorsToolHandler", tools.GetVendorsToolHandler),
-        ("GetVlansToolHandler", tools.GetVlansToolHandler),
-        ("GetRoutingTableToolHandler", tools.GetRoutingTableToolHandler),
-        ("GetManagedIPv4ToolHandler", tools.GetManagedIPv4ToolHandler),
-        ("GetArpToolHandler", tools.GetArpToolHandler),
-        ("GetMacToolHandler", tools.GetMacToolHandler),
-        ("GetNeighborsToolHandler", tools.GetNeighborsToolHandler),
-        ("GetAvailableColumnsToolHandler", tools.GetAvailableColumnsToolHandler),
-        ("GetConnectionInfoToolHandler", tools.GetConnectionInfoToolHandler),
-        ("CompareTableToolHandler", tools.CompareTableToolHandler),
-    ]
-
-    registered_count = 0
-    for tool_name, tool_class in tool_classes:
-        try:
-            tool_handler = tool_class(ipf_client)
-            
-            # Validate tool description during registration
-            tool_handler.get_tool_description()
-            
-            add_tool_handler(tool_handler)
-            registered_count += 1
-            logger.debug(f"Registered tool: {tool_name}")
-
-        except Exception as e:
-            logger.error(f"Failed to register {tool_name}: {e}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
-            continue
-
-    logger.info(f"Successfully registered {registered_count}/{len(tool_classes)} tools")
-
+    # Use the registry module to handle discovery and registration
+    registered_count, failed_count = registry.register_discovered_tools(
+        tools_module=tools,
+        ipf_client=ipf_client,
+        add_handler_func=add_tool_handler
+    )
+    
+    # Optional: Log additional info
+    if failed_count > 0:
+        logger.error("Some tools failed to register. Check logs above for details.")
 
 def add_tool_handler(tool_class: tools.ToolHandler):
     """Add a tool handler to the global registry."""
     global tool_handlers
     tool_handlers[tool_class.name] = tool_class
 
-
 def get_tool_handler(name: str) -> tools.ToolHandler | None:
     """Get a tool handler by name."""
     return tool_handlers.get(name)
-
 
 @app.list_tools()
 async def list_tools() -> list[Tool]:
@@ -126,12 +94,10 @@ async def list_tools() -> list[Tool]:
             tools_list.append(handler.get_tool_description())
         except Exception as e:
             logger.error(f"Error getting tool description for {name}: {e}")
-            # Continue with other tools instead of failing completely
             continue
     
     logger.debug(f"Returning {len(tools_list)} available tools")
     return tools_list
-
 
 @app.call_tool()
 async def call_tool(name: str, arguments: Any) -> Sequence[TextContent | ImageContent | EmbeddedResource]:
@@ -148,7 +114,6 @@ async def call_tool(name: str, arguments: Any) -> Sequence[TextContent | ImageCo
     except Exception as e:
         logger.error(f"Tool {name} failed: {e}")
         raise RuntimeError(f"Tool execution failed: {e}")
-
 
 async def main():
     """Main entry point for the MCP server."""
@@ -169,7 +134,6 @@ async def main():
     except Exception as e:
         logger.error(f"Failed to start server: {e}")
         raise
-
 
 if __name__ == "__main__":
     import asyncio

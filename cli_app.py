@@ -124,17 +124,15 @@ class ConversationManager:
                 return (user_id, str(self.db_path))
 
             elif choice == "2":
-                confirm = input("Are you sure you want to delete all conversation history? (y/N): ")
-                if confirm.lower() in ["y", "yes"]:
-                    if self.clear_database():
-                        print("Starting fresh with new database...")
-                        print(f"\n**DEBUG** Creating new conversation database at {self.db_path}\n")
-                        return (user_id, str(self.db_path))
-                    else:
-                        print("Failed to clear database. Exiting...")
-                        break
-                else:
+                confirm = input("Are you sure you want to delete all conversation history? (Y/n): ")
+                if confirm.lower() == "n" or confirm.lower() not in ["", "y", "yes"]:
                     print("Cancelled. Please choose another option.")
+                elif self.clear_database():
+                    print("Starting fresh with a new database...")
+                    return (user_id, str(self.db_path))
+                else:
+                    print("Failed to clear history. Please try again.")
+                    continue
 
             elif choice == "3":
                 print("Exiting...")
@@ -187,16 +185,54 @@ async def chat_loop(agent: Agent):
     conv_manager = ConversationManager()
     session_user_id, session_db_path = conv_manager.prompt_for_session()
 
-    print("\n" + "=" * 50)
-    print("🌐 IP Fabric Assistant Chat")
-    print("=" * 50)
-    print("Commands:")
-    print("  'exit' or 'quit' - Exit the chat")
-    print("  'clear' - Clear conversation history and exit the chat")
-    print("  'help' - Show this help message")
-    print("=" * 50)
-
     session = SQLiteSession(session_user_id, session_db_path)
+
+    def show_help():
+        """Display enhanced help message with better formatting."""
+        print("\n" + "═" * 50)
+        print(" " * 10 + "🌐 IP Fabric Assistant | 📖 Help")
+        print("═" * 50)
+
+        # Available Commands Section
+        print("\n  🎮 Available Commands:\n")
+        print("   • help      - Show this help message")
+        print("   • clear     - Clear conversation history and exit")
+        print("   • exit/quit - Exit the application")
+        
+        # Experimental Commands Section
+        print("\n 🧪 Experimental Commands:")
+        print("   ⚠️  Note: These commands may have varying results\n")
+        print("   • /tools   - List available tools")
+        print("   • /info    - Get IP Fabric instance information")
+        
+        # Example Questions Section
+        print("\n 💡 What You Can Ask:")
+        print("\n   🔍 Network Discovery:\n")
+        print("     • \"Show me all devices in my network\"")
+        print("     • \"What devices are in site ABC?\"")
+        print("     • \"List all Cisco routers\"")
+        print("\n   🌐 Interface & Connectivity:\n")
+        print("     • \"Show interface status for router XYZ\"")
+        print("     • \"What interfaces are down?\"")
+        # print("     • \"Display BGP neighbors\"")
+        print("\n   🛣️  Routing & VLANs:\n")
+        print("     • \"Show routing table for device ABC\"")
+        print("     • \"List all VLANs\"")
+        print("     • \"What's the network topology?\"")
+        print("\n   📊 Analysis & Comparison:\n")
+        print("     • \"Compare table Device between snapshots A and snapshot B\"")
+        print("     • \"Show network changes over time\"")
+        # print("     • \"Analyze device performance\"")
+        
+        # Tips Section
+        print("\n 💡 Tips:\n")
+        print("   • Be specific with device names and sites")
+        print("   • Use natural language - I understand context!")
+        print("   • Ask follow-up questions to dive deeper")
+        print("\n" + "═" * 50)
+        print()
+
+    show_help()
 
     while True:
         try:
@@ -207,13 +243,7 @@ async def chat_loop(agent: Agent):
                 break
 
             elif msg.lower() == "help":
-                print("\n📖 Available commands:")
-                print("  • Ask questions about your network infrastructure")
-                print("  • Request device inventories, interface status, routing tables")
-                print("  • Analyze VLANs, BGP neighbors, and network topology")
-                print("  • Compare data across different snapshots")
-                print("  • 'clear' - Clear conversation history")
-                print("  • 'exit' or 'quit' - Exit the application")
+                show_help()
                 continue
 
             elif msg.lower() == "clear":
@@ -253,7 +283,6 @@ async def chat_loop(agent: Agent):
         except Exception as e:
             print(f"\n❌ Error: {e}")
             print("Please try again or type 'exit' to quit.")
-
 
 async def main():
     """Main application entry point."""
