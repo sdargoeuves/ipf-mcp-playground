@@ -72,6 +72,8 @@ def register_tool_handlers():
         add_handler_func=add_tool_handler
     )
     
+    logger.info(f"Registered {registered_count} tools, {failed_count} failed")
+    
     # Optional: Log additional info
     if failed_count > 0:
         logger.error("Some tools failed to register. Check logs above for details.")
@@ -88,15 +90,22 @@ def get_tool_handler(name: str) -> tools.ToolHandler | None:
 @app.list_tools()
 async def list_tools() -> list[Tool]:
     """List available tools."""
+    # Ensure tools are registered before listing them
+    if not tool_handlers:
+        logger.warning("No tools registered yet. This might be called before initialization.")
+        return []
+    
     tools_list = []
     for name, handler in tool_handlers.items():
         try:
-            tools_list.append(handler.get_tool_description())
+            tool_description = handler.get_tool_description()
+            tools_list.append(tool_description)
+            logger.debug(f"Added tool: {name}")
         except Exception as e:
             logger.error(f"Error getting tool description for {name}: {e}")
             continue
     
-    logger.debug(f"Returning {len(tools_list)} available tools")
+    logger.info(f"Returning {len(tools_list)} available tools")
     return tools_list
 
 @app.call_tool()
@@ -107,12 +116,15 @@ async def call_tool(name: str, arguments: Any) -> Sequence[TextContent | ImageCo
 
     tool_handler = get_tool_handler(name)
     if not tool_handler:
-        raise ValueError(f"Unknown tool: {name}")
+        available_tools = list(tool_handlers.keys())
+        raise ValueError(f"Unknown tool: {name}. Available tools: {available_tools}")
 
     try:
+        logger.debug(f"Calling tool {name} with arguments: {arguments}")
         return tool_handler.run_tool(arguments)
     except Exception as e:
         logger.error(f"Tool {name} failed: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise RuntimeError(f"Tool execution failed: {e}")
 
 async def main():
@@ -124,6 +136,9 @@ async def main():
         initialize_ipf_client()
         register_tool_handlers()
         
+        # Log the registered tools for debugging
+        logger.info(f"Registered tools: {list(tool_handlers.keys())}")
+        
         logger.info("Server ready, starting stdio server...")
 
         # Import here to avoid issues with event loops
@@ -133,6 +148,7 @@ async def main():
             await app.run(read_stream, write_stream, app.create_initialization_options())
     except Exception as e:
         logger.error(f"Failed to start server: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise
 
 if __name__ == "__main__":
