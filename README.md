@@ -4,6 +4,25 @@ MCP server to interact with IP Fabric via the python SDK, initially inspired by 
 
 <a href="https://ipfabric.io"><img width="380" height="200" src="https://ipfabric.io/wp-content/uploads/2024/06/IP_Fabric_Logo_Color-1.svg" alt="server for IP Fabric MCP server" /></a>
 
+## ⚠️ Disclaimer — Unofficial & Experimental
+
+> **This is NOT an official IP Fabric product or project.**
+>
+> This MCP server was built as a **personal experiment** to explore, test, and learn about the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) and how it can interact with IP Fabric through its Python SDK. It is not developed, maintained, endorsed, or supported by IP Fabric in any official capacity.
+>
+> **🚀 An official IP Fabric MCP server is currently being developed and tested by the IP Fabric team.** If you are looking for an official, production-ready integration, please reach out to your **Solution Architect** for the latest updates on availability and features.
+>
+> ### What this means for you:
+>
+> - **Do not use this in production environments.** This project may contain bugs, incomplete features, or breaking changes at any time.
+> - **No guarantees.** There is no warranty, SLA, or official support associated with this project.
+> - **No affiliation.** This repository is not affiliated with, endorsed by, or connected to IP Fabric's official MCP server efforts.
+> - **Use at your own risk.** You are responsible for any consequences of using this code in your environment.
+>
+> If you have questions about IP Fabric's **official** MCP server, please contact your Solution Architect or reach out to the IP Fabric team directly.
+>
+> _This project exists purely for educational and experimental purposes. Contributions and feedback are welcome, but please set your expectations accordingly!_ 🧪
+
 ## Components
 
 ### Tools
