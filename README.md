@@ -2,8 +2,6 @@
 
 MCP server to interact with IP Fabric via the python SDK, initially inspired by the [MCP Server](https://github.com/MarkusPfundstein/mcp-obsidian) for Obsidian.
 
-<a href="https://ipfabric.io"><img width="380" height="200" src="https://ipfabric.io/wp-content/uploads/2024/06/IP_Fabric_Logo_Color-1.svg" alt="server for IP Fabric MCP server" /></a>
-
 ## ⚠️ Disclaimer — Unofficial & Experimental
 
 > **This is NOT an official IP Fabric product or project.**
